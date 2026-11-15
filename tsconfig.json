@@ -41,6 +41,7 @@
     "lib/store.tsx",
     "lib/complaints-repo.ts",
     "components/dashboard-view.tsx",
-    "components/complaints-view.tsx"
+    "components/complaints-view.tsx",
+    "legacy/**"
   ]
 }
