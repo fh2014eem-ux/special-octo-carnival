@@ -204,7 +204,10 @@ export async function listUsers(): Promise<User[]> {
     },
     orderBy: { name: "asc" },
   })
-  return rows.map((row) => ({
+  return rows.map((row: {
+    id: string; username: string; name: string; email: string | null; branch: string;
+    role: string; active: boolean; createdAt: Date; updatedAt: Date;
+  }) => ({
     id: row.id,
     username: row.username,
     name: row.name,
