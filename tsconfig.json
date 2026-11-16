@@ -43,6 +43,7 @@
     "components/dashboard-view.tsx",
     "components/complaints-view.tsx",
     "legacy/**",
-    "source-extracted/**"
+    "source-extracted/**",
+    "components/components/**"
   ]
 }
