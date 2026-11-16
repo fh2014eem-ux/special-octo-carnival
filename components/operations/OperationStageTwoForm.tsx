@@ -12,7 +12,7 @@ export function OperationStageTwoForm({ onNext, onBack }: OperationStageTwoFormP
     sensitivity: "عادية",
     category: "اداري",
     project: "",
-    files: [] as FileList | null,
+    files: null as FileList | null,
   })
 
   const handleSubmit = (e: React.FormEvent) => {
