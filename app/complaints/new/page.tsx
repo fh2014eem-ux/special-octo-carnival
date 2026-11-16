@@ -1,4 +1,4 @@
-import { ComplaintForm } from "@/components/الشكاوى/complaint-form"
+import { ComplaintForm } from "@/components/complaints/complaint-form"
 
 export default function NewComplaintPage() {
   return <ComplaintForm />
