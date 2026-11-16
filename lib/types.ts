@@ -78,6 +78,17 @@ export interface Operation {
   phone: string
   altPhone?: string
   email?: string
+  accusedPerson?: string
+  subClass2?: string
+  priority?: string
+  projectNo?: string
+  referredTo?: string
+  internalReply?: string
+  finalClosingText?: string
+  closingChannel?: string
+  replyMessage?: string
+  finalEvaluation?: string
+  requiresAnalysis?: string
   name: string
   gender: string
   capacity: string
