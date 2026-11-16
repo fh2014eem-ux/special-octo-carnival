@@ -1,0 +1,62 @@
+name: CHM-SFD validation
+
+on:
+  push:
+    branches:
+      - chm-source-extracted
+    paths:
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "prisma/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "tsconfig.json"
+      - "next.config.mjs"
+      - "scripts/**"
+      - ".github/workflows/chm-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/chm_ci?schema=public"
+      PRISMA_DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/chm_ci?schema=public"
+      BETTER_AUTH_SECRET: "ci-only-not-a-production-secret"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      USE_MOCK_DATA: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout isolated source branch
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm run db:generate
+
+      - name: Run repository static verification
+        run: node scripts/verify-project.mjs
+
+      - name: TypeScript validation
+        run: pnpm run typecheck
+
+      - name: Production build
+        run: pnpm run build
