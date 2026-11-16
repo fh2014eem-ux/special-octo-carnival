@@ -114,7 +114,7 @@ export function SelectField({
 }) {
   return (
     <Field label={label} required={required} className={className}>
-      <Select value={value || undefined} onValueChange={onChange} disabled={disabled}>
+      <Select value={value || undefined} onValueChange={(v) => onChange(v ?? "")} disabled={disabled}>
         <SelectTrigger>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
