@@ -77,6 +77,7 @@ export interface Operation {
   channel: string
   phone: string
   altPhone?: string
+  email?: string
   name: string
   gender: string
   capacity: string
