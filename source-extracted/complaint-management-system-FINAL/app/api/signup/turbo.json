@@ -1,0 +1,13 @@
+{
+  "tasks": {
+    "build": {
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        // Include whichever path matches your project layout
+        "app/.well-known/workflow/**",
+        "src/app/.well-known/workflow/**"
+      ]
+    }
+  }
+}
