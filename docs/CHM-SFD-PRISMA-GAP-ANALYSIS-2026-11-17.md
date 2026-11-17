@@ -123,3 +123,25 @@
 - أوقف Realtime حالياً لأنه غير مطلوب في النطاق الحالي.
 - اربط المورد بمشروع Vercel `special-octo-carnival-1ayy`، وتحقق من اسم المورد/المشروع في Neon بعد اكتمال الإنشاء.
 - لا تستخدم المتغيرات التي أُنشئت سابقاً قبل التأكد من أنها تشير إلى المورد الجديد؛ لا تنسخ أو تنشر أي قيمة سرية في GitHub.
+
+## 8. اعتماد النسخة التشغيلية رقم 2 وتثبيت Neon بتاريخ 2026-11-17
+
+### النسخة المرجعية التي طلبها المستخدم
+- مشروع Vercel المعتمد: `complaint-management-system-2`، ID: `prj_kFAjBubYbYOjnCigZGMDXlkWxpT8`.
+- نطاق الإنتاج الحالي: `https://complaint-management-system-2.vercel.app/`.
+- نشر الإنتاج المرجعي الحالي: `dpl_4YDJDedmZxuZcqVx3HGhef8e3Gz6`، المصدر `drop`، الحالة READY.
+- فحص الصفحة الرئيسية أعاد HTTP 200 ومحتوى HTML بعنوان `نظام الشكاوى والبلاغات V10`، وهو واجهة SPA تستخدم `google.script.run`. المسارات الداخلية مثل `/operations/new` لا تعمل كمسارات مستقلة؛ التنقل يتم داخل الصفحة.
+- PDF المرفق من المستخدم (4 صفحات) يعرض لوحة التحكم وشاشات العمليات والصناديق/المخزون/المتابعة. اعتمد المستخدم هذه النسخة مرجعاً للواجهة والوظائف المطلوب الحفاظ عليها.
+- قائمة ملفات نشر الإنتاج تضمنت `src/.vercel/output/static/index.html` و`reference-materials/WebAppV10.html` و`reference-materials/Code_V10.gs` ومواد مرجعية. محتوى ملفي HTML/GS لم يستخرج كاملاً عبر واجهة Vercel بسبب حد الاستجابة؛ لا تستخدم أي نسخة مقتطعة.
+- لا تروّج نشر Next.js الحالي إلى Production ولا تستبدل نطاق الإنتاج. النشر التجريبي المرتبط بفرع `chm-source-extracted` (commit `c317df5`) مختلف عن نشر V10 الثابت؛ حالة READY وحدها لا تعني أنه النسخة التشغيلية المرجعية.
+
+### Neon الجديدة
+- أنشئ مورد Neon من Vercel Marketplace ثم أعيدت تسميته بنجاح إلى `chm-sfd-production`.
+- Neon project ID: `lively-term-37478992`; org `org-young-leaf-25539506`; region `aws-us-east-1` (Washington DC / iad1); Free plan; PostgreSQL 18.
+- الفرع الافتراضي: `main`، ID `br-cold-sunset-bchwia5c`; قاعدة البيانات `neondb`; role `neondb_owner`.
+- فحص المخطط أظهر قاعدة `neondb` بمخطط `public` فارغاً؛ لا توجد جداول تطبيق بعد.
+- تم تحديث متغير `DATABASE_URL` في Vercel project `complaint-management-system-2` ليشير إلى Neon الجديدة، للبيئتين Preview وProduction. لم تُطبع قيمة السر.
+- أضيف `BETTER_AUTH_SECRET` مشفراً لبيئتي Preview وProduction، وأضيف `BETTER_AUTH_URL` مشفراً لبيئة Production بعنوان النطاق الرسمي. لم يتم تفعيل Better Auth في واجهة V10 القديمة، ولا يثبت ذلك أن مصادقة النظام أصبحت خادمية.
+- Prisma schema في فرع `chm-source-extracted` يطلب `DATABASE_URL` و`PRISMA_DATABASE_URL` (directUrl)، ولا يوجد مجلد migrations أو seed.ts في المسارات التي فُحصت. لا تنفذ migrate/db push حتى تكتمل مراجعة المخطط ومطابقته لقالب Excel.
+- إعادة نشر Preview للمشروع 2 على commit `c317df5` أصبحت READY بعد نجاح تثبيت 489 حزمة، توليد Prisma Client، تجميع Next.js، وفحص TypeScript. ظهر تحذير Better Auth عن السر الافتراضي أثناء توليد الصفحات قبل إضافة السر؛ لذلك يلزم إعادة نشر جديدة لاختبار الإعدادات بعد إضافة السر. لم ينجح فحص HTTP للعنوان الفريد لهذا النشر (404)، فلا تعتمد هذا النشر للتشغيل.
+- لا تحذف المشاريع القديمة بعد؛ احتفظ بـ`special-octo-carnival-1ayy` كنسخة استرداد حتى اكتمال نقل الواجهة والاختبارات. روابط الحذف لبقية المشاريع تتطلب تأكيداً مباشراً من المستخدم في لوحة Vercel.
