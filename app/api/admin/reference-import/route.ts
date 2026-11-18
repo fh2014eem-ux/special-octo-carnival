@@ -59,7 +59,7 @@ function parseWorkbook(buffer: Buffer) {
     return { rows: [...map.values()], duplicates }
   }
   const p = unique(projects.filter(r => r["رقم المشروع"] && r["اسم المشروع"]), r => key([r["رقم المشروع"]]))
-  const l = unique(locations.filter(r => r["المحافظة"] && r["المديرية"] && r["القرية/الحي"]), r => key([r["المحافظة"], r["المديرية"], r["العزلة"], r["القرية/الحي"]]))
+  const l = unique(locations.filter(r => r["المحافظة"] && r["المديرية"]), r => key([r["المحافظة"], r["المديرية"], r["العزلة"], r["القرية/الحي"]]))
   const c = unique(categories.filter(r => r["التصنيف الرئيسي"]), r => key([r["التصنيف الرئيسي"], r["التصنيف الفرعي"], r["التصنيف الفرعي الثاني"]]))
   return {
     data: { projects: p.rows, locations: l.rows, categories: c.rows } as Dataset,
@@ -109,6 +109,12 @@ export async function POST(req: NextRequest) {
     const client = await pool.connect()
     try {
       await client.query("BEGIN")
+      // استبدال مجموعة البيانات المرجعية النشطة داخل معاملة واحدة:
+      // تعطيل كل السجلات السابقة ثم إعادة تفعيل/إدراج ما ورد في ملف Excel.
+      // إذا فشل أي جزء، تعيد ROLLBACK الحالة السابقة بالكامل.
+      await client.query('UPDATE "chm_reference_projects" SET "active" = FALSE')
+      await client.query('UPDATE "chm_reference_locations" SET "active" = FALSE')
+      await client.query('UPDATE "chm_reference_categories" SET "active" = FALSE')
       const projectRows = parsed.data.projects.map(r => [r["رقم المشروع"], r["اسم المشروع"], r["الفرع"] ?? "", JSON.stringify(r), true, new Date()])
       const locationRows = parsed.data.locations.map(r => [key([r["المحافظة"], r["المديرية"], r["العزلة"], r["القرية/الحي"]]), r["المحافظة"], r["المديرية"], r["العزلة"], r["القرية/الحي"], true, new Date()])
       const categoryRows = parsed.data.categories.map(r => [key([r["التصنيف الرئيسي"], r["التصنيف الفرعي"], r["التصنيف الفرعي الثاني"]]), r["التصنيف الرئيسي"], r["التصنيف الفرعي"], r["التصنيف الفرعي الثاني"], true, new Date()])
