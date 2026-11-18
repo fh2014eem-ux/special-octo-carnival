@@ -54,7 +54,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="p-5 space-y-4 text-sm">
           <div className="rounded-lg bg-blue-50 text-blue-900 p-3 text-xs leading-6">
-            يجب أن يحتوي الملف على ثلاث أوراق بأسمائها: <b>المواقع</b> و<b>المشاريع</b> و<b>التصنيفات</b>. لا تُحذف السجلات القديمة غير الموجودة في الملف؛ يتم إدراج الجديد وتحديث المطابق.
+            يجب أن يحتوي الملف على ثلاث أوراق بأسمائها: <b>المواقع</b> و<b>المشاريع</b> و<b>التصنيفات</b>. يتم استبدال مجموعة البيانات النشطة بما في الملف. تُحفظ السجلات السابقة غير الموجودة كسجلات غير نشطة، ولا تُحذف نهائياً.
           </div>
           <input type="file" accept=".xlsx" onChange={(e) => { setFile(e.target.files?.[0] || null); setPreview(null); setDone(false) }} className="w-full text-xs border rounded-lg p-3 bg-white" />
           {file && <p className="text-xs text-slate-600">الملف المحدد: <b>{file.name}</b> — {(file.size / 1024).toFixed(0)} كيلوبايت</p>}
