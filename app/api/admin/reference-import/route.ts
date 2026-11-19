@@ -27,9 +27,9 @@ async function requireAdmin() {
   return { ok: true as const, actor: session.user.email }
 }
 
-function readSheet(book: XLSX.WorkBook, name: string, required: readonly string[]) {
-  const sheetName = book.SheetNames.find((n) => n.trim() === name)
-  if (!sheetName) throw new Error(`الورقة المطلوبة غير موجودة: ${name}`)
+function readSheet(book: XLSX.WorkBook, names: readonly string[], required: readonly string[]) {
+  const sheetName = book.SheetNames.find((n) => names.includes(n.trim()))
+  if (!sheetName) throw new Error(`الورقة المطلوبة غير موجودة. الأسماء المقبولة: ${names.join(" أو ")}`)
   const sheet = book.Sheets[sheetName]
   const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: "", raw: false })
   const headers = (rows[0] ?? []).map(clean)
@@ -44,9 +44,10 @@ function readSheet(book: XLSX.WorkBook, name: string, required: readonly string[
 
 function parseWorkbook(buffer: Buffer) {
   const book = XLSX.read(buffer, { type: "buffer", cellDates: true })
-  const projects = readSheet(book, SHEETS.projects.name, ["رقم المشروع", "اسم المشروع"])
-  const locations = readSheet(book, SHEETS.locations.name, SHEETS.locations.headers)
-  const categories = readSheet(book, SHEETS.categories.name, SHEETS.categories.headers)
+  // يقبل ملف البيانات المستقل، كما يقبل قالب التشغيل المعتمد ذي أسماء أوراق مرجع_*.
+  const projects = readSheet(book, ["المشاريع", "مرجع_المشاريع"], ["رقم المشروع", "اسم المشروع"])
+  const locations = readSheet(book, ["المواقع", "مرجع_المواقع"], SHEETS.locations.headers)
+  const categories = readSheet(book, ["التصنيفات", "مرجع_التصنيفات"], SHEETS.categories.headers)
   const unique = <T>(rows: T[], getKey: (r: T) => string) => {
     const map = new Map<string, T>()
     let duplicates = 0
