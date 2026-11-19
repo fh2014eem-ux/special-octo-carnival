@@ -5,7 +5,7 @@ export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  username: text("username").unique(),
+  username: text("username").notNull().unique(),
   displayUsername: text("displayUsername"),
   role: text("role").notNull().default("مدخل بيانات"),
   branch: text("branch").notNull().default("الإدارة العامة"),
