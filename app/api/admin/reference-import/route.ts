@@ -34,7 +34,7 @@ function readSheet(book: XLSX.WorkBook, names: readonly string[], required: read
   const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: "", raw: false })
   const headers = (rows[0] ?? []).map(clean)
   const missing = required.filter((h) => !headers.includes(h))
-  if (missing.length) throw new Error(`أعمدة مفقودة في ورقة ${name}: ${missing.join("، ")}`)
+  if (missing.length) throw new Error(`أعمدة مفقودة في ورقة ${sheetName}: ${missing.join("، ")}`)
   return rows.slice(1).map((values) => {
     const row: Row = {}
     headers.forEach((h, i) => { if (h) row[h] = clean(values[i]) })
@@ -106,6 +106,16 @@ export async function POST(req: NextRequest) {
     }
     if (mode !== "commit" || form.get("confirm") !== "YES")
       return NextResponse.json({ success: false, message: "لم يتم اعتماد الاستيراد. أعد المعاينة ثم أكد العملية." }, { status: 400 })
+
+    const emptySets = Object.entries(parsed.data).filter(([, rows]) => rows.length === 0).map(([key]) => key)
+    if (emptySets.length) {
+      const labels: Record<string, string> = { projects: "المشاريع", locations: "المواقع", categories: "التصنيفات" }
+      return NextResponse.json({
+        success: false,
+        message: `أُلغي الاستيراد لحماية البيانات الحالية؛ لا توجد سجلات صالحة في: ${emptySets.map(k => labels[k] ?? k).join("، ")}. لم يتم تغيير قاعدة البيانات.`,
+        counts: parsed.counts,
+      }, { status: 422 })
+    }
 
     const client = await pool.connect()
     try {
