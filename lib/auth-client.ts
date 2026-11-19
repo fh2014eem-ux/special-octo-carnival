@@ -3,6 +3,7 @@
 import { createAuthClient } from "better-auth/react"
 import { usernameClient } from "better-auth/client/plugins"
 
-export const authClient = createAuthClient({ plugins: [usernameClient({ immutableUsername: true })] })
+// The server enforces username immutability; the client plugin only exposes username sign-in.
+export const authClient = createAuthClient({ plugins: [usernameClient()] })
 
 export const { signIn, signUp, signOut, useSession } = authClient
