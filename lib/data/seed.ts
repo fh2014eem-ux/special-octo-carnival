@@ -10,16 +10,8 @@ import type {
   Responder,
 } from "@/lib/types"
 
-// كلمة المرور الافتراضية لجميع الحسابات (مطابقة لكود النظام الأصلي)
-export const DEFAULT_PASSWORD = "Sfd123456"
-
-export const SEED_USERS: User[] = [
-  { username: "Faheem", name: "Faheem", email: "faheem@sfd.local", branch: "الإدارة العامة", role: "مدير النظام", active: true, password: DEFAULT_PASSWORD },
-  { username: "Taiz", name: "Taiz", email: "taiz@sfd.local", branch: "فرع تعز", role: "مدخل بيانات", active: true, password: DEFAULT_PASSWORD },
-  { username: "Aden", name: "Aden", email: "aden@sfd.local", branch: "فرع عدن", role: "مدخل بيانات", active: true, password: DEFAULT_PASSWORD },
-  { username: "Mukalla", name: "Mukalla", email: "mukalla@sfd.local", branch: "فرع المكلا", role: "مدخل بيانات", active: true, password: DEFAULT_PASSWORD },
-  { username: "Marib", name: "Marib", email: "marib@sfd.local", branch: "مكتب مأرب", role: "مدخل بيانات", active: true, password: DEFAULT_PASSWORD },
-]
+// لا توجد حسابات أو كلمات مرور تجريبية؛ الحسابات تُدار عبر Better Auth.
+export const SEED_USERS: User[] = []
 
 export const SEED_RESPONDERS: Responder[] = [
   { id: "r1", name: "أحمد الشرعبي", branch: "فرع تعز", email: "ahmed@sfd.org", active: true },
