@@ -17,13 +17,14 @@ export function LoginScreen() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const res = login(username, password)
-    if (!res.ok) {
-      setError(res.error ?? "تعذر تسجيل الدخول.")
+    try {
+      const res = await login(username, password)
+      if (!res.ok) setError(res.error ?? "تعذر تسجيل الدخول.")
+    } finally {
       setLoading(false)
     }
   }
@@ -89,10 +90,6 @@ export function LoginScreen() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-muted-foreground">
-              للدخول التجريبي استخدم اسم المستخدم <span className="font-mono font-semibold">Faheem</span> وكلمة المرور{" "}
-              <span className="font-mono font-semibold">Sfd123456</span>
-            </p>
           </CardContent>
         </Card>
 
