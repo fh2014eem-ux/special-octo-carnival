@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth"
+import { username } from "better-auth/plugins"
 import { pool } from "@/lib/db"
 
 export const auth = betterAuth({
@@ -13,7 +14,16 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
+    disableSignUp: true,
   },
+  user: {
+    additionalFields: {
+      role: { type: "string", required: true, defaultValue: "مدخل بيانات", input: false },
+      branch: { type: "string", required: true, defaultValue: "الإدارة العامة", input: false },
+      active: { type: "boolean", required: true, defaultValue: true, input: false },
+    },
+  },
+  plugins: [username({ immutableUsername: true })],
   trustedOrigins: [
     ...(process.env.NODE_ENV === "development"
       ? [
