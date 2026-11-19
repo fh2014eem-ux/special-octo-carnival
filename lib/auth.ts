@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth"
 import { username } from "better-auth/plugins"
+import { APIError, createAuthMiddleware } from "better-auth/api"
 import { pool } from "@/lib/db"
 
 export const auth = betterAuth({
@@ -14,7 +15,6 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
-    disableSignUp: true,
   },
   user: {
     additionalFields: {
@@ -24,6 +24,24 @@ export const auth = betterAuth({
     },
   },
   plugins: [username({ immutableUsername: true })],
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/sign-up/email") return
+      const bootstrapToken = ctx.request?.headers.get("x-chm-bootstrap-token")
+      const provisionToken = ctx.request?.headers.get("x-chm-user-provision-token")
+      const isBootstrap = Boolean(process.env.CHM_BOOTSTRAP_TOKEN && bootstrapToken === process.env.CHM_BOOTSTRAP_TOKEN)
+      const isProvision = Boolean(process.env.CHM_USER_PROVISION_TOKEN && provisionToken === process.env.CHM_USER_PROVISION_TOKEN)
+      if (!isBootstrap && !isProvision) {
+        throw new APIError("FORBIDDEN", { message: "إنشاء الحسابات متاح عبر إجراء التهيئة أو مدير النظام فقط." })
+      }
+      if (isBootstrap) {
+        const result = await pool.query('SELECT COUNT(*)::int AS count FROM public."user"')
+        if (Number(result.rows[0]?.count ?? 0) > 0) {
+          throw new APIError("FORBIDDEN", { message: "تم إنشاء مدير النظام بالفعل؛ إجراء التهيئة لم يعد متاحاً." })
+        }
+      }
+    }),
+  },
   trustedOrigins: [
     ...(process.env.NODE_ENV === "development"
       ? [
