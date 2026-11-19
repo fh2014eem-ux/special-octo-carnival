@@ -11,7 +11,7 @@ generator client {
 // جدول المستخدمين والفروع والأدوار
 model User {
   id                 String               @id
-  username           String?              @unique
+  username           String               @unique
   displayUsername    String?
   name               String
   email              String               @unique
