@@ -32,9 +32,9 @@ import {
   SEED_RESPONDERS,
 } from "@/lib/data/seed"
 import { BRANCHES, STATUS } from "@/lib/data/constants"
+import { authClient, useSession } from "@/lib/auth-client"
 
 const STORAGE_KEY = "sfd-complaints-v1"
-const SESSION_KEY = "sfd-session-v1"
 
 interface DataState {
   users: User[]
@@ -49,7 +49,7 @@ interface DataState {
 }
 
 const initialData: DataState = {
-  users: SEED_USERS,
+  users: [],
   operations: SEED_OPERATIONS,
   fieldReports: SEED_FIELD_REPORTS,
   boxes: SEED_BOXES,
@@ -65,9 +65,9 @@ interface StoreContextValue extends DataState {
   currentUser: User | null
   isAdmin: boolean
   branchName: string
-  login: (username: string, password: string) => { ok: boolean; error?: string }
-  logout: () => void
-  changePassword: (oldPass: string, newPass: string) => { ok: boolean; error?: string }
+  login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>
+  logout: () => Promise<void>
+  changePassword: (oldPass: string, newPass: string) => Promise<{ ok: boolean; error?: string }>
   // scoped views (respect branch unless admin)
   scopedOperations: Operation[]
   // actions
@@ -91,7 +91,7 @@ function loadData(): DataState {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return initialData
     const parsed = JSON.parse(raw)
-    return { ...initialData, ...parsed }
+    return { ...initialData, ...parsed, users: [] }
   } catch {
     return initialData
   }
@@ -105,29 +105,50 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<DataState>(initialData)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [ready, setReady] = useState(false)
+  const [dataReady, setDataReady] = useState(false)
+  const authSession = useSession()
 
-  // hydrate from localStorage on client
+  // Hydrate non-authentication UI data only. Authentication always comes from Better Auth.
   useEffect(() => {
-    const d = loadData()
-    setData(d)
-    try {
-      const session = window.localStorage.getItem(SESSION_KEY)
-      if (session) {
-        const username = JSON.parse(session)?.username
-        const user = d.users.find((u) => u.username === username && u.active)
-        if (user) setCurrentUser(user)
+    setData(loadData())
+    setDataReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (!dataReady || authSession.isPending) return
+    const sessionUser = authSession.data?.user
+    if (!sessionUser) {
+      setCurrentUser(null)
+    } else {
+      const profile = sessionUser as typeof sessionUser & {
+        username?: string
+        role?: string
+        branch?: string
+        active?: boolean
       }
-    } catch {
-      /* ignore */
+      if (profile.active === false) {
+        setCurrentUser(null)
+        void authClient.signOut()
+      } else {
+        setCurrentUser({
+          id: profile.id,
+          username: profile.username || profile.name,
+          name: profile.name,
+          email: profile.email,
+          branch: profile.branch || "",
+          role: profile.role || "مدخل بيانات",
+          active: true,
+        })
+      }
     }
     setReady(true)
-  }, [])
+  }, [dataReady, authSession.data, authSession.isPending])
 
   // persist data
   useEffect(() => {
     if (!ready) return
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...data, users: [] }))
     } catch {
       /* ignore quota */
     }
@@ -143,49 +164,62 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [branchName])
 
   const login = useCallback(
-    (username: string, password: string) => {
+    async (username: string, password: string) => {
       const u = username.trim()
       if (!u) return { ok: false, error: "يرجى إدخال اسم المستخدم." }
       if (!password) return { ok: false, error: "يرجى إدخال كلمة المرور." }
-      const user = data.users.find((x) => x.username === u)
-      if (!user || user.password !== password)
-        return { ok: false, error: "اسم المستخدم أو كلمة المرور غير صحيحة." }
-      if (!user.active) return { ok: false, error: "هذا المستخدم موقوف ولا يمكنه الدخول." }
-      setCurrentUser(user)
       try {
-        window.localStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username }))
+        const result = await authClient.signIn.username({ username: u, password })
+        if (result.error) return { ok: false, error: "اسم المستخدم أو كلمة المرور غير صحيحة." }
+        const profile = result.data?.user as (typeof result.data.user & {
+          username?: string; role?: string; branch?: string; active?: boolean
+        })
+        if (!profile) return { ok: false, error: "تعذر تحميل بيانات المستخدم." }
+        if (profile.active === false) {
+          await authClient.signOut()
+          return { ok: false, error: "هذا المستخدم موقوف ولا يمكنه الدخول." }
+        }
+        setCurrentUser({
+          id: profile.id,
+          username: profile.username || profile.name,
+          name: profile.name,
+          email: profile.email,
+          branch: profile.branch || "",
+          role: profile.role || "مدخل بيانات",
+          active: true,
+        })
+        return { ok: true }
       } catch {
-        /* ignore */
+        return { ok: false, error: "تعذر الاتصال بخدمة تسجيل الدخول. حاول مرة أخرى." }
       }
-      return { ok: true }
     },
-    [data.users],
+    [],
   )
 
-  const logout = useCallback(() => {
-    setCurrentUser(null)
+  const logout = useCallback(async () => {
     try {
-      window.localStorage.removeItem(SESSION_KEY)
-    } catch {
-      /* ignore */
+      await authClient.signOut()
+    } finally {
+      setCurrentUser(null)
     }
   }, [])
 
   const changePassword = useCallback(
-    (oldPass: string, newPass: string) => {
+    async (oldPass: string, newPass: string) => {
       if (!currentUser) return { ok: false, error: "لا توجد جلسة." }
-      if (currentUser.password !== oldPass)
-        return { ok: false, error: "كلمة المرور الحالية غير صحيحة." }
       if (newPass.length < 8 || !/[A-Za-z]/.test(newPass) || !/[0-9]/.test(newPass))
         return { ok: false, error: "كلمة المرور يجب أن تكون 8 خانات على الأقل وتحتوي حروفًا وأرقامًا." }
-      setData((d) => ({
-        ...d,
-        users: d.users.map((u) =>
-          u.username === currentUser.username ? { ...u, password: newPass } : u,
-        ),
-      }))
-      setCurrentUser((u) => (u ? { ...u, password: newPass } : u))
-      return { ok: true }
+      try {
+        const result = await authClient.changePassword({
+          currentPassword: oldPass,
+          newPassword: newPass,
+          revokeOtherSessions: true,
+        })
+        if (result.error) return { ok: false, error: result.error.message || "تعذر تغيير كلمة المرور." }
+        return { ok: true }
+      } catch {
+        return { ok: false, error: "تعذر تغيير كلمة المرور حالياً." }
+      }
     },
     [currentUser],
   )
