@@ -10,17 +10,21 @@ generator client {
 
 // جدول المستخدمين والفروع والأدوار
 model User {
-  id                 String               @id @default(uuid())
-  username           String               @unique
-  password           String               // يجب أن تكون قيمة مجزّأة، لا كلمة مرور نصية
-  name               String               @default("")
-  email              String?              @unique
+  id                 String               @id
+  username           String?              @unique
+  displayUsername    String?
+  name               String
+  email              String               @unique
+  emailVerified      Boolean              @default(false)
+  image              String?
   active             Boolean              @default(true)
-  role               String               // ADMIN, DATA_ENTRY, etc.
-  branch             String               // الإدارة العامة, فرع تعز, فرع عدن, فرع حضرموت, مكتب مأرب
+  role               String               @default("مدخل بيانات")
+  branch             String               @default("الإدارة العامة")
   assignedOperations ComplaintOperation[] @relation("AssignedOperations")
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
+
+  @@map("user")
 }
 
 // جدول العمليات الرئيسي (شكوى، بلاغ، طلب، استعلام، مقترح، إطراء)
