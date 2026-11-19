@@ -20,7 +20,7 @@ const key = (parts: string[]) => parts.map((x) => x.normalize("NFC").trim()).joi
 
 async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) return { ok: false as const, status: 401, message: "يرجى تسجيل الدخول أولاً." }
+  if (!session?.user || session.user.active === false) return { ok: false as const, status: 401, message: "يرجى تسجيل الدخول أولاً." }
   const allowed = (process.env.CHM_ADMIN_EMAILS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean)
   if (!session.user.email || !allowed.includes(session.user.email.toLowerCase()))
     return { ok: false as const, status: 403, message: "هذه العملية متاحة لمدير النظام فقط. أضف بريد المدير إلى CHM_ADMIN_EMAILS في إعدادات Vercel." }
