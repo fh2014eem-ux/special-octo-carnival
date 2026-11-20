@@ -30,8 +30,7 @@ export async function GET() {
       if (second && !categories[main][sub].includes(second)) categories[main][sub].push(second)
     }
     return NextResponse.json({ success: true, categories, count: result.rowCount ?? 0 })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "تعذر تحميل التصنيفات من قاعدة البيانات."
+  } catch {
     return NextResponse.json({ success: false, message: "تعذر تحميل التصنيفات من قاعدة البيانات." }, { status: 500 })
   }
 }
