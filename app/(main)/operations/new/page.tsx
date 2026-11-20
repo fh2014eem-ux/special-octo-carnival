@@ -408,6 +408,7 @@ export default function NewOperationPage() {
           </CardHeader>
           <CardContent className="p-6 space-y-4 text-xs">
             {!isSimpleType ? (
+              <>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-semibold mb-1">التصنيف الرئيسي *</label>
@@ -433,6 +434,7 @@ export default function NewOperationPage() {
               </div>
               {categoriesLoading && <p className="text-slate-500">جارٍ تحميل التصنيفات المعتمدة من قاعدة Neon...</p>}
               {categoriesError && <p role="alert" className="text-red-700">{categoriesError}</p>}
+              </>
             ) : (
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 font-bold">
                 ✓ تم تصنيف العملية تلقائياً وتجاوز فقرة التصنيفات المعقدة.
