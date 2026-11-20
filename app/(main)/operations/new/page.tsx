@@ -43,35 +43,7 @@ const TAIZ_DIRECTORATES: Record<string, Record<string, string[]>> = {
   "سامع": { "بني أحمد": ["قرية سامع"] }
 }
 
-// قاعدة بيانات التصنيفات المترابطة
-const CATEGORY_HIERARCHY: Record<string, Record<string, string[]>> = {
-  "مالية": {
-    "قضايا ذات علاقة بالإستحقاقات المالية": ["تأخر المستحقات المالية", "عدم صرف المستحقات المالية", "الخصم من المستحقات", "قضايا ذات علاقة بخصم مبالغ مالية"],
-    "قضايا من غير العاملين مع الصندوق": ["استحقاقات أخرى متأخرة"]
-  },
-  "قضايا فنية": {
-    "قضايا ذات علاقه بتطوير المشاريع": ["تعديل التصاميم الهندسية", "الدراسات الميدانية"],
-    "قضايا ذات علاقه بتنفيذ المشاريع": ["المساهمات المجتمعية", "استلام الموقع", "جودة التنفيذ"]
-  },
-  "قضايا تعاقدية": {
-    "خلافات عقود المقاولين": ["تأخر تسليم المستخلصات", "تمديد فترة العقد"]
-  },
-  "قضايا الفساد والاحتيال": {
-    "شبهات فساد": ["استغلال النفوذ", "مخالفة معايير الاستهداف"]
-  },
-  "الأثر البيئي والاجتماعي": {
-    "أضرار تنفيذ المشاريع": ["أضرار الأراضي الزراعية", "مخلفات البناء"]
-  },
-  "السلامة المهنية": {
-    "إصابات العمل": ["غياب وسائل الحماية"]
-  },
-  "قضايا إدارية": {
-    "أداء الموظفين": ["تأخر الردود الرسمية"]
-  },
-  "قضايا بعدالة التدخلات": {
-    "استهداف المناطق": ["عدالة التوزيع للمشاريع"]
-  }
-}
+type CategoryHierarchy = Record<string, Record<string, string[]>>
 
 // محاكاة محاضر الفتح المسجلة في النظام للربط الإلزامي
 const REGISTERED_MINUTES_DATABASE = [
@@ -136,6 +108,9 @@ export default function NewOperationPage() {
   const [mainClass, setMainClass] = useState("")
   const [subClass, setSubClass] = useState("")
   const [subClass2, setSubClass2] = useState("")
+  const [categoryHierarchy, setCategoryHierarchy] = useState<CategoryHierarchy>({})
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [categoriesError, setCategoriesError] = useState("")
   const [sensitivity, setSensitivity] = useState("منخفضة الحساسية")
   const [priority, setPriority] = useState("عادية (افتراضي)")
   const [searchNo, setSearchNo] = useState("")
@@ -163,8 +138,28 @@ export default function NewOperationPage() {
   const availableIsolations = directorate && TAIZ_DIRECTORATES[directorate] ? Object.keys(TAIZ_DIRECTORATES[directorate]) : []
   const availableVillages = directorate && isolation && TAIZ_DIRECTORATES[directorate]?.[isolation] ? TAIZ_DIRECTORATES[directorate][isolation] : []
 
-  const availableSubClasses = mainClass && CATEGORY_HIERARCHY[mainClass] ? Object.keys(CATEGORY_HIERARCHY[mainClass]) : []
-  const availableSubClass2s = mainClass && subClass && CATEGORY_HIERARCHY[mainClass]?.[subClass] ? CATEGORY_HIERARCHY[mainClass][subClass] : []
+  const availableSubClasses = mainClass && categoryHierarchy[mainClass] ? Object.keys(categoryHierarchy[mainClass]) : []
+  const availableSubClass2s = mainClass && subClass && categoryHierarchy[mainClass]?.[subClass] ? categoryHierarchy[mainClass][subClass] : []
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadCategories() {
+      setCategoriesLoading(true)
+      setCategoriesError("")
+      try {
+        const response = await fetch("/api/reference-data/categories", { credentials: "same-origin", cache: "no-store" })
+        const result = await response.json()
+        if (!response.ok || !result.success) throw new Error(result.message || "تعذر تحميل التصنيفات.")
+        if (!cancelled) setCategoryHierarchy(result.categories ?? {})
+      } catch (error) {
+        if (!cancelled) setCategoriesError(error instanceof Error ? error.message : "تعذر تحميل التصنيفات.")
+      } finally {
+        if (!cancelled) setCategoriesLoading(false)
+      }
+    }
+    void loadCategories()
+    return () => { cancelled = true }
+  }, [])
 
   const filteredProjects = PROJECTS_DATABASE.filter(p => {
     const matchNo = searchNo ? p.id.includes(searchNo) : true
@@ -233,7 +228,7 @@ export default function NewOperationPage() {
       return false
     }
 
-    if (!mainClass || !subClass || !subClass2) {
+    if (!mainClass || !subClass || (availableSubClass2s.length > 0 && !subClass2)) {
       toast.error("يرجى استكمال تحديد كافة التصنيفات للشكاوى والبلاغات.")
       return false
     }
@@ -416,26 +411,28 @@ export default function NewOperationPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="block font-semibold mb-1">التصنيف الرئيسي *</label>
-                  <select value={mainClass} onChange={(e) => { setMainClass(e.target.value); setSubClass(""); setSubClass2(""); }} className="w-full p-2 border rounded-lg bg-white">
+                  <select value={mainClass} disabled={categoriesLoading || Object.keys(categoryHierarchy).length === 0} onChange={(e) => { setMainClass(e.target.value); setSubClass(""); setSubClass2(""); }} className="w-full p-2 border rounded-lg bg-white">
                     <option value="">-- اختر الرئيسي --</option>
-                    {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
+                    {Object.keys(categoryHierarchy).map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block font-semibold mb-1">التصنيف الفرعي *</label>
-                  <select value={subClass} onChange={(e) => { setSubClass(e.target.value); setSubClass2(""); }} className="w-full p-2 border rounded-lg bg-white">
+                  <select value={subClass} disabled={!mainClass || categoriesLoading} onChange={(e) => { setSubClass(e.target.value); setSubClass2(""); }} className="w-full p-2 border rounded-lg bg-white">
                     <option value="">-- اختر الفرعي --</option>
                     {availableSubClasses.map(sc => <option key={sc} value={sc}>{sc}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">التصنيف الفرعي الثاني *</label>
-                  <select value={subClass2} onChange={(e) => setSubClass2(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
-                    <option value="">-- اختر الفرعي الثاني --</option>
+                  <label className="block font-semibold mb-1">التصنيف الفرعي الثاني {availableSubClass2s.length > 0 ? "*" : "(غير متاح لهذا التصنيف)"}</label>
+                  <select value={subClass2} disabled={!subClass || availableSubClass2s.length === 0} onChange={(e) => setSubClass2(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+                    <option value="">{availableSubClass2s.length > 0 ? "-- اختر الفرعي الثاني --" : "-- لا يوجد تصنيف فرعي ثانٍ --"}</option>
                     {availableSubClass2s.map(sc2 => <option key={sc2} value={sc2}>{sc2}</option>)}
                   </select>
                 </div>
               </div>
+              {categoriesLoading && <p className="text-slate-500">جارٍ تحميل التصنيفات المعتمدة من قاعدة Neon...</p>}
+              {categoriesError && <p role="alert" className="text-red-700">{categoriesError}</p>}
             ) : (
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 font-bold">
                 ✓ تم تصنيف العملية تلقائياً وتجاوز فقرة التصنيفات المعقدة.
