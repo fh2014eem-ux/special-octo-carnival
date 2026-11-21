@@ -202,8 +202,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           active: true,
         })
         return { ok: true }
-      } catch {
-        return { ok: false, error: "تعذر الاتصال بخدمة تسجيل الدخول. حاول مرة أخرى." }
+      } catch (error) {
+        const diagnosticName = error instanceof Error ? error.name : "UnknownError"
+        const diagnosticMessage = error instanceof Error ? error.message : String(error)
+        // Safe sign-in diagnostic: never include usernames, passwords, cookies, or request headers.
+        console.error("[CHM_AUTH_SIGNIN_EXCEPTION]", {
+          name: diagnosticName,
+          message: diagnosticMessage.slice(0, 240),
+        })
+        return {
+          ok: false,
+          error: `تعذر إكمال طلب تسجيل الدخول: ${diagnosticName} — ${diagnosticMessage.slice(0, 160)}`,
+        }
       }
     },
     [],
