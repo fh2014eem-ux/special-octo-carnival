@@ -28,8 +28,8 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== "/sign-up/email") return
       // ctx.request is absent for server-side auth.api calls; ctx.headers is available in both modes.
-      const bootstrapToken = ctx.headers.get("x-chm-bootstrap-token")
-      const provisionToken = ctx.headers.get("x-chm-user-provision-token")
+      const bootstrapToken = ctx.headers?.get("x-chm-bootstrap-token") ?? null
+      const provisionToken = ctx.headers?.get("x-chm-user-provision-token") ?? null
       const isBootstrap = Boolean(process.env.CHM_BOOTSTRAP_TOKEN && bootstrapToken === process.env.CHM_BOOTSTRAP_TOKEN)
       const isProvision = Boolean(process.env.CHM_USER_PROVISION_TOKEN && provisionToken === process.env.CHM_USER_PROVISION_TOKEN)
       if (!isBootstrap && !isProvision) {
