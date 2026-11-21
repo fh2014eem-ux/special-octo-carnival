@@ -170,7 +170,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!password) return { ok: false, error: "يرجى إدخال كلمة المرور." }
       try {
         const result = await authClient.signIn.username({ username: u, password })
-        if (result.error) return { ok: false, error: "اسم المستخدم أو كلمة المرور غير صحيحة." }
+        if (result.error) {
+          // Temporary safe diagnostic: record only Better Auth's error code/status, never credentials.
+          console.warn("[CHM_AUTH_SIGNIN_REJECTED]", {
+            code: result.error.code,
+            status: result.error.status,
+            message: result.error.message,
+          })
+          return {
+            ok: false,
+            error: result.error.message
+              ? `تعذر تسجيل الدخول: ${result.error.message} [${result.error.code || result.error.status || "AUTH_ERROR"}]`
+              : "اسم المستخدم أو كلمة المرور غير صحيحة.",
+          }
+        }
         const profile = result.data?.user as (typeof result.data.user & {
           username?: string; role?: string; branch?: string; active?: boolean
         })
