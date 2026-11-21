@@ -177,11 +177,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             status: result.error.status,
             message: result.error.message,
           })
+          const diagnosticCode = result.error.code || "NO_ERROR_CODE"
+          const diagnosticStatus = result.error.status ?? "NO_STATUS"
           return {
             ok: false,
             error: result.error.message
-              ? `تعذر تسجيل الدخول: ${result.error.message} [${result.error.code || result.error.status || "AUTH_ERROR"}]`
-              : "اسم المستخدم أو كلمة المرور غير صحيحة.",
+              ? `تعذر تسجيل الدخول: ${result.error.message} [${diagnosticCode} / ${diagnosticStatus}]`
+              : `رفض خادم المصادقة تسجيل الدخول [${diagnosticCode} / ${diagnosticStatus}].`,
           }
         }
         const profile = result.data?.user as (typeof result.data.user & {
