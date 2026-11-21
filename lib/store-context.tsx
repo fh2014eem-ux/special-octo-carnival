@@ -165,7 +165,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (username: string, password: string) => {
-      const u = username.trim()
+      const u = username.trim().toLowerCase()
       if (!u) return { ok: false, error: "يرجى إدخال اسم المستخدم." }
       if (!password) return { ok: false, error: "يرجى إدخال كلمة المرور." }
       try {
