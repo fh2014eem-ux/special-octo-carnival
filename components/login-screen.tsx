@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -84,6 +85,7 @@ export function LoginScreen() {
                 </p>
               )}
 
+              <div className="flex justify-start"><Link href="/forgot-password" className="text-sm text-primary underline-offset-4 hover:underline">نسيت كلمة المرور؟</Link></div>
               <Button type="submit" className="w-full gap-2" disabled={loading}>
                 <LogIn className="size-4" />
                 {loading ? "جارٍ الدخول..." : "تسجيل الدخول"}
