@@ -42,6 +42,8 @@ export async function POST(request: Request) {
   const secondSubCategory = String(body.secondSubCategory ?? "").trim()
   const citizenName = String(body.citizenName ?? "").trim()
   const priority = String(body.priority ?? "MEDIUM") as ComplaintPriority
+  const projectNumber = String(body.project ?? "").trim()
+  const locationParts = String(body.location ?? "").split(" / ").map(value => value.trim()).filter(Boolean)
 
   // التحقق من المدخلات
   const errors: Record<string, string> = {}
@@ -75,6 +77,20 @@ export async function POST(request: Request) {
     }, { status: 422 })
   }
 
+  let projectName: string | null = null
+  if (projectNumber) {
+    const matchingProject = await prisma.$queryRaw<Array<{ projectName: string }>>`
+      SELECT project_name AS "projectName"
+      FROM public.chm_reference_projects
+      WHERE active = true AND project_number = ${projectNumber}
+      LIMIT 1
+    `
+    if (!matchingProject[0]) {
+      return NextResponse.json({ error: "بيانات غير صحيحة", errors: { project: "المشروع المحدد غير موجود في المرجع المعتمد" } }, { status: 422 })
+    }
+    projectName = matchingProject[0].projectName
+  }
+
   const complaint = await createComplaint({
     title,
     description,
@@ -84,6 +100,12 @@ export async function POST(request: Request) {
     secondSubCategory,
     priority,
     location: body.location ? String(body.location).trim() : null,
+    governorate: locationParts[0] ?? null,
+    directorate: locationParts[1] ?? null,
+    subDistrict: locationParts[2] ?? null,
+    villageOrNeighborhood: locationParts[3] ?? null,
+    projectNumber: projectNumber || null,
+    projectName,
     citizenName,
     citizenEmail: body.citizenEmail ? String(body.citizenEmail).trim() : null,
     citizenPhone: body.citizenPhone ? String(body.citizenPhone).trim() : null,
