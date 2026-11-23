@@ -72,7 +72,7 @@ export function ComplaintForm() {
   const subDistricts = Array.from(new Set(locations.filter(x => x.governorate === governorate && x.directorate === directorate).map(x => x.subDistrict).filter(Boolean)))
   const villages = Array.from(new Set(locations.filter(x => x.governorate === governorate && x.directorate === directorate && x.subDistrict === subDistrict).map(x => x.village).filter(Boolean)))
 
-  const [form, setForm = useState({
+  const [form, setForm] = useState({
     title: "",
     primaryCategory: "",
     subCategory: "",
