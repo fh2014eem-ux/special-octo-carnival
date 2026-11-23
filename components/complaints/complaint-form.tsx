@@ -1,10 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle2, Loader2 } from "lucide-react"
 import { createComplaintRequest } from "@/lib/api-client"
-import { CATEGORIES } from "@/lib/data/constants"
 import { PROJECTS } from "@/lib/data/projects"
 import { LOCATIONS } from "@/lib/data/locations"
 import { PRIORITY_LABELS, PRIORITY_ORDER } from "@/lib/types"
@@ -13,15 +12,49 @@ import { PageHeader } from "@/components/page-header"
 const fieldCls =
   "h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
 
+type ReferenceCategory = {
+  primaryCategory: string
+  subCategory: string
+  secondSubCategory: string
+}
+
 export function ComplaintForm() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [categories, setCategories] = useState<ReferenceCategory[]>([])
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    fetch("/api/reference/categories")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("تعذر تحميل التصنيفات")
+        return response.json()
+      })
+      .then((data: { categories?: ReferenceCategory[] }) => {
+        if (active) setCategories(data.categories ?? [])
+      })
+      .catch(() => {
+        if (active) setErrors((current) => ({
+          ...current,
+          _global: "تعذر تحميل التصنيفات المرجعية. يرجى تحديث الصفحة والمحاولة مجدداً.",
+        }))
+      })
+      .finally(() => {
+        if (active) setCategoriesLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const [form, setForm] = useState({
     title: "",
-    category: CATEGORIES[0] || "",
+    primaryCategory: "",
+    subCategory: "",
+    secondSubCategory: "",
     project: PROJECTS[0]?.id || "",
     priority: "MEDIUM",
     description: "",
@@ -30,6 +63,22 @@ export function ComplaintForm() {
     citizenEmail: "",
     citizenPhone: "",
   })
+
+  const primaryCategories = Array.from(new Set(categories.map((item) => item.primaryCategory)))
+  const subCategories = Array.from(new Set(
+    categories
+      .filter((item) => item.primaryCategory === form.primaryCategory)
+      .map((item) => item.subCategory),
+  ))
+  const secondSubCategories = Array.from(new Set(
+    categories
+      .filter((item) =>
+        item.primaryCategory === form.primaryCategory &&
+        item.subCategory === form.subCategory &&
+        item.secondSubCategory,
+      )
+      .map((item) => item.secondSubCategory),
+  ))
 
   function update(key: keyof typeof form, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -106,16 +155,55 @@ export function ComplaintForm() {
           </Field>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Field label="الفئة" error={errors.category} required>
+            <Field label="التصنيف الرئيسي" error={errors.primaryCategory} required>
               <select
                 className={fieldCls}
-                value={form.category}
-                onChange={(e) => update("category", e.target.value)}
+                value={form.primaryCategory}
+                disabled={categoriesLoading || primaryCategories.length === 0}
+                onChange={(e) => setForm((current) => ({
+                  ...current,
+                  primaryCategory: e.target.value,
+                  subCategory: "",
+                  secondSubCategory: "",
+                }))}
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                <option value="">{categoriesLoading ? "جارٍ تحميل التصنيفات..." : "اختر التصنيف الرئيسي"}</option>
+                {primaryCategories.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </select>
+            </Field>
+
+            <Field label="التصنيف الفرعي" error={errors.subCategory} required>
+              <select
+                className={fieldCls}
+                value={form.subCategory}
+                disabled={!form.primaryCategory}
+                onChange={(e) => setForm((current) => ({
+                  ...current,
+                  subCategory: e.target.value,
+                  secondSubCategory: "",
+                }))}
+              >
+                <option value="">اختر التصنيف الفرعي</option>
+                {subCategories.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <Field label="التصنيف الفرعي الثاني" error={errors.secondSubCategory} required={secondSubCategories.length > 0}>
+              <select
+                className={fieldCls}
+                value={form.secondSubCategory}
+                disabled={!form.subCategory || secondSubCategories.length === 0}
+                onChange={(e) => update("secondSubCategory", e.target.value)}
+              >
+                <option value="">{secondSubCategories.length ? "اختر التصنيف الفرعي الثاني" : "لا يوجد مستوى ثالث لهذا التصنيف"}</option>
+                {secondSubCategories.map((item) => (
+                  <option key={item} value={item}>{item}</option>
                 ))}
               </select>
             </Field>
