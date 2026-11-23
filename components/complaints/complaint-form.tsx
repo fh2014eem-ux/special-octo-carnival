@@ -4,19 +4,15 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle2, Loader2 } from "lucide-react"
 import { createComplaintRequest } from "@/lib/api-client"
-import { PROJECTS } from "@/lib/data/projects"
-import { LOCATIONS } from "@/lib/data/locations"
 import { PRIORITY_LABELS, PRIORITY_ORDER } from "@/lib/types"
 import { PageHeader } from "@/components/page-header"
 
 const fieldCls =
   "h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
 
-type ReferenceCategory = {
-  primaryCategory: string
-  subCategory: string
-  secondSubCategory: string
-}
+type ReferenceCategory = { primaryCategory: string; subCategory: string; secondSubCategory: string }
+type ReferenceProject = { projectNumber: string; projectName: string; branch: string }
+type ReferenceLocation = { governorate: string; directorate: string; subDistrict: string; village: string }
 
 export function ComplaintForm() {
   const router = useRouter()
@@ -25,6 +21,12 @@ export function ComplaintForm() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [categories, setCategories] = useState<ReferenceCategory[]>([])
   const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [projects, setProjects] = useState<ReferenceProject[]>([])
+  const [locations, setLocations] = useState<ReferenceLocation[]>([])
+  const [referencesLoading, setReferencesLoading] = useState(true)
+  const [governorate, setGovernorate] = useState("")
+  const [directorate, setDirectorate] = useState("")
+  const [subDistrict, setSubDistrict] = useState("")
 
   useEffect(() => {
     let active = true
@@ -50,15 +52,35 @@ export function ComplaintForm() {
     }
   }, [])
 
-  const [form, setForm] = useState({
+  useEffect(() => {
+    let active = true
+    Promise.all([
+      fetch("/api/reference/projects").then(r => { if (!r.ok) throw new Error("projects"); return r.json() }),
+      fetch("/api/reference/locations").then(r => { if (!r.ok) throw new Error("locations"); return r.json() }),
+    ]).then(([projectData, locationData]) => {
+      if (!active) return
+      setProjects(projectData.projects ?? [])
+      setLocations(locationData.locations ?? [])
+    }).catch(() => {
+      if (active) setErrors(current => ({ ...current, _global: "تعذر تحميل بيانات المشاريع أو المواقع. يرجى تحديث الصفحة أو مراجعة مدير النظام." }))
+    }).finally(() => { if (active) setReferencesLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const governorates = Array.from(new Set(locations.map(x => x.governorate)))
+  const directorates = Array.from(new Set(locations.filter(x => x.governorate === governorate).map(x => x.directorate)))
+  const subDistricts = Array.from(new Set(locations.filter(x => x.governorate === governorate && x.directorate === directorate).map(x => x.subDistrict).filter(Boolean)))
+  const villages = Array.from(new Set(locations.filter(x => x.governorate === governorate && x.directorate === directorate && x.subDistrict === subDistrict).map(x => x.village).filter(Boolean)))
+
+  const [form, setForm = useState({
     title: "",
     primaryCategory: "",
     subCategory: "",
     secondSubCategory: "",
-    project: PROJECTS[0]?.id || "",
+    project: "",
     priority: "MEDIUM",
     description: "",
-    location: LOCATIONS[0]?.name || "",
+    location: "",
     citizenName: "",
     citizenEmail: "",
     citizenPhone: "",
@@ -214,9 +236,10 @@ export function ComplaintForm() {
                 value={form.project}
                 onChange={(e) => update("project", e.target.value)}
               >
-                {PROJECTS.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
+                <option value="">{referencesLoading ? "جارٍ تحميل المشاريع..." : "اختر المشروع"}</option>
+                {projects.map((p) => (
+                  <option key={p.projectNumber} value={p.projectNumber}>
+                    {p.projectNumber} - {p.projectName}
                   </option>
                 ))}
               </select>
@@ -238,19 +261,32 @@ export function ComplaintForm() {
               </select>
             </Field>
 
-            <Field label="الموقع الجغرافي" error={errors.location}>
-              <select
-                className={fieldCls}
-                value={form.location}
-                onChange={(e) => update("location", e.target.value)}
-              >
-                {LOCATIONS.map((loc) => (
-                  <option key={loc.id || loc.name} value={loc.name}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
+            <div className="grid grid-cols-1 gap-3">
+              <Field label="المحافظة" required>
+                <select className={fieldCls} value={governorate} disabled={referencesLoading} onChange={e => { setGovernorate(e.target.value); setDirectorate(""); setSubDistrict(""); update("location", e.target.value) }}>
+                  <option value="">اختر المحافظة</option>
+                  {governorates.map(x => <option key={x} value={x}>{x}</option>)}
+                </select>
+              </Field>
+              <Field label="المديرية">
+                <select className={fieldCls} value={directorate} disabled={!governorate} onChange={e => { setDirectorate(e.target.value); setSubDistrict(""); update("location", [governorate,e.target.value].filter(Boolean).join(" / ")) }}>
+                  <option value="">اختر المديرية</option>
+                  {directorates.map(x => <option key={x} value={x}>{x}</option>)}
+                </select>
+              </Field>
+              <Field label="العزلة">
+                <select className={fieldCls} value={subDistrict} disabled={!directorate} onChange={e => { setSubDistrict(e.target.value); update("location", [governorate,directorate,e.target.value].filter(Boolean).join(" / ")) }}>
+                  <option value="">اختر العزلة</option>
+                  {subDistricts.map(x => <option key={x} value={x}>{x}</option>)}
+                </select>
+              </Field>
+              <Field label="القرية / الحي">
+                <select className={fieldCls} value={form.location.split(" / ")[3] ?? ""} disabled={!subDistrict} onChange={e => update("location", [governorate,directorate,subDistrict,e.target.value].filter(Boolean).join(" / "))}>
+                  <option value="">اختر القرية أو الحي</option>
+                  {villages.map(x => <option key={x} value={x}>{x}</option>)}
+                </select>
+              </Field>
+            </div>
           </div>
 
           <Field label="وصف الشكوى" error={errors.description} required>
