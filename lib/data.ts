@@ -114,6 +114,9 @@ export interface CreateComplaintInput {
   title: string
   description: string
   category: string
+  primaryCategory?: string
+  subCategory?: string
+  secondSubCategory?: string
   priority: ComplaintPriority
   location?: string | null
   citizenName: string
