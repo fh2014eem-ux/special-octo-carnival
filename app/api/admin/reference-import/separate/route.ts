@@ -14,10 +14,9 @@ const key = (parts: string[]) => parts.map(clean).join("\u001f")
 async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user || session.user.active === false) return { ok: false as const, status: 401, message: "يرجى تسجيل الدخول أولاً." }
-  const allowed = (process.env.CHM_ADMIN_EMAILS ?? "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean)
-  if (!session.user.email || !allowed.includes(session.user.email.toLowerCase()))
+  if (session.user.role !== "مدير النظام" || session.user.branch !== "الإدارة العامة")
     return { ok: false as const, status: 403, message: "هذه العملية متاحة لمدير النظام فقط." }
-  return { ok: true as const, actor: session.user.email }
+  return { ok: true as const, actor: session.user.id }
 }
 
 function parse(file: Buffer, dataset: "projects" | "locations") {
