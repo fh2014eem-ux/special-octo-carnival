@@ -128,6 +128,12 @@ export interface CreateComplaintInput {
   channel?: string
   minuteId?: string | null
   projectId?: string | null
+  projectNumber?: string | null
+  projectName?: string | null
+  governorate?: string | null
+  directorate?: string | null
+  subDistrict?: string | null
+  villageOrNeighborhood?: string | null
 }
 
 export async function createComplaint(
@@ -150,6 +156,12 @@ export async function createComplaint(
       phone: input.citizenPhone ?? "",
       citizenEmail: input.citizenEmail ?? null,
       location: input.location ?? null,
+      governorate: input.governorate ?? null,
+      directorate: input.directorate ?? null,
+      subDistrict: input.subDistrict ?? null,
+      villageOrNeighborhood: input.villageOrNeighborhood ?? null,
+      projectNumber: input.projectNumber ?? null,
+      projectName: input.projectName ?? null,
       subject: input.title,
       description: input.description,
       primaryCategory: input.primaryCategory ?? input.category,
