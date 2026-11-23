@@ -13,6 +13,9 @@ export interface Complaint {
   title: string
   description: string
   category: ComplaintCategory
+  primaryCategory?: string | null
+  subCategory?: string | null
+  secondSubCategory?: string | null
   priority: ComplaintPriority
   status: ComplaintStatus
   channel?: ComplaintChannel
