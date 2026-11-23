@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server"
+import { headers } from "next/headers"
+import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export async function GET() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user || session.user.active === false) {
+    return NextResponse.json({ error: "يرجى تسجيل الدخول أولاً." }, { status: 401 })
+  }
+
   try {
     const locations = await prisma.$queryRaw<Array<{ governorate: string; directorate: string; subDistrict: string; village: string }>>`
       SELECT governorate, directorate, sub_district AS "subDistrict", village
