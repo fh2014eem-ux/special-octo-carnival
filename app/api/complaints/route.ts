@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server"
+import { headers } from "next/headers"
+import { auth } from "@/lib/auth"
 import { createComplaint, listComplaints } from "@/lib/data"
 import { PRIORITY_ORDER, STATUS_ORDER } from "@/lib/types"
 import type { ComplaintPriority, ComplaintStatus } from "@/lib/types"
@@ -7,8 +9,14 @@ import { prisma } from "@/lib/prisma"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-// GET /api/complaints?status=&category=&q=  => جلب قائمة الشكاوى
+// GET /api/complaints?status=&category=&q=
+// بيانات الشكاوى المسجلة داخل النظام لا تُعرض إلا بجلسة مصادقة نشطة.
 export async function GET(request: Request) {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user || session.user.active === false) {
+    return NextResponse.json({ error: "يرجى تسجيل الدخول أولاً." }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
   const status = searchParams.get("status") ?? undefined
   const category = searchParams.get("category") ?? undefined
@@ -26,7 +34,8 @@ export async function GET(request: Request) {
   return NextResponse.json({ complaints })
 }
 
-// POST /api/complaints  => إضافة شكوى جديدة
+// POST /api/complaints => استقبال شكوى جديدة عبر قناة الإدخال العامة.
+// يبقى POST متاحاً لاستقبال البلاغات العامة، بينما قراءة السجلات محمية أعلاه.
 export async function POST(request: Request) {
   let body: Record<string, unknown>
   try {
@@ -45,16 +54,13 @@ export async function POST(request: Request) {
   const projectNumber = String(body.project ?? "").trim()
   const locationParts = String(body.location ?? "").split(" / ").map(value => value.trim()).filter(Boolean)
 
-  // التحقق من المدخلات
   const errors: Record<string, string> = {}
   if (title.length < 3) errors.title = "العنوان مطلوب (3 أحرف على الأقل)"
-  if (description.length < 10)
-    errors.description = "الوصف مطلوب (10 أحرف على الأقل)"
+  if (description.length < 10) errors.description = "الوصف مطلوب (10 أحرف على الأقل)"
   if (!primaryCategory) errors.primaryCategory = "اختر التصنيف الرئيسي"
   if (!subCategory) errors.subCategory = "اختر التصنيف الفرعي"
   if (citizenName.length < 2) errors.citizenName = "اسم مقدم الشكوى مطلوب"
-  if (!PRIORITY_ORDER.includes(priority))
-    errors.priority = "أولوية غير صحيحة"
+  if (!PRIORITY_ORDER.includes(priority)) errors.priority = "أولوية غير صحيحة"
 
   if (Object.keys(errors).length > 0) {
     return NextResponse.json({ error: "بيانات غير صحيحة", errors }, { status: 422 })
