@@ -25,7 +25,9 @@ export interface ReportResponse {
 export async function createComplaintRequest(input: {
   title: string
   description: string
-  category: string
+  primaryCategory: string
+  subCategory: string
+  secondSubCategory: string
   priority: string
   location?: string
   citizenName: string
