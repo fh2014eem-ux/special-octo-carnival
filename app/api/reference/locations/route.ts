@@ -1,0 +1,20 @@
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
+export async function GET() {
+  try {
+    const locations = await prisma.$queryRaw<Array<{ governorate: string; directorate: string; subDistrict: string; village: string }>>`
+      SELECT governorate, directorate, sub_district AS "subDistrict", village
+      FROM public.chm_reference_locations
+      WHERE active = true
+      ORDER BY governorate, directorate, sub_district, village
+    `
+    return NextResponse.json({ locations, count: locations.length })
+  } catch (error) {
+    console.error("تعذر تحميل مرجع المواقع", error)
+    return NextResponse.json({ error: "تعذر تحميل المواقع المرجعية حالياً" }, { status: 503 })
+  }
+}
