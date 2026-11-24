@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const [done, setDone] = useState(false)
 
   async function send(mode: "preview" | "commit") {
-    if (!file) { toast.error("يرجى اختيار ملف Excel أولاً."); return }
+    if (!file) { toast.error("يرجى اختيار ملف Excel أو CSV أولاً."); return }
     setBusy(true)
     try {
       const body = new FormData()
@@ -48,7 +48,7 @@ export default function SettingsPage() {
       </div>
       <Card className="bg-white border">
         <CardHeader className="bg-slate-50 border-b py-3">
-          <CardTitle className="text-sm font-bold">📥 استيراد البيانات المرجعية من Excel</CardTitle>
+          <CardTitle className="text-sm font-bold">📥 استيراد البيانات المرجعية من Excel أو CSV</CardTitle>
         </CardHeader>
         <CardContent className="p-5 space-y-4 text-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -56,9 +56,9 @@ export default function SettingsPage() {
             <button type="button" onClick={() => { setDataset("projects"); setFile(null); setPreview(null); setDone(false) }} className={`rounded-lg border p-3 font-bold ${dataset === "projects" ? "border-blue-800 bg-blue-50 text-blue-900" : "bg-white"}`}>ملف المشاريع</button>
           </div>
           <div className="rounded-lg bg-amber-50 text-amber-900 p-3 text-xs leading-6">
-            اختر نوع الملف أولاً ثم ارفع الملف المطابق فقط. تتم معاينة السجلات قبل الحفظ. عند الاعتماد يتم تحديث المجموعة المحددة وحدها، مع إبقاء المجموعة الأخرى والتصنيفات دون تغيير. السجلات غير الموجودة في الملف تصبح غير نشطة ولا تُحذف نهائياً.
+            اختر نوع الملف أولاً ثم ارفع ملف Excel أو CSV المطابق فقط. تتم معاينة السجلات قبل الحفظ. عند الاعتماد يتم تحديث المجموعة المحددة وحدها، مع إبقاء المجموعة الأخرى والتصنيفات دون تغيير. السجلات غير الموجودة في الملف تصبح غير نشطة ولا تُحذف نهائياً.
           </div>
-          <input key={dataset} type="file" accept=".xlsx" onChange={(e) => { setFile(e.target.files?.[0] || null); setPreview(null); setDone(false) }} className="w-full text-xs border rounded-lg p-3 bg-white" />
+          <input key={dataset} type="file" accept=".xlsx,.csv" onChange={(e) => { setFile(e.target.files?.[0] || null); setPreview(null); setDone(false) }} className="w-full text-xs border rounded-lg p-3 bg-white" />
           {file && <p className="text-xs text-slate-600">الملف المحدد: <b>{file.name}</b> — {(file.size / 1024).toFixed(0)} كيلوبايت</p>}
           <div className="flex flex-wrap gap-2">
             <Button disabled={busy || !file} onClick={() => send("preview")} className="bg-blue-900 text-white font-bold">{busy ? "جارٍ المعالجة..." : "فحص الملف ومعاينة البيانات"}</Button>
