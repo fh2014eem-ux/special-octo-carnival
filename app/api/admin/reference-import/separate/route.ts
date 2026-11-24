@@ -20,7 +20,7 @@ async function requireAdmin() {
 }
 
 function parseCsv(text: string): string[][] {
-  const input = text.replace(/^\\uFEFF/, "")
+  const input = text.replace(/^\uFEFF/, "")
   const rows: string[][] = []
   let row: string[] = [], field = "", quoted = false
   for (let i = 0; i < input.length; i++) {
@@ -31,8 +31,8 @@ function parseCsv(text: string): string[][] {
       else field += char
     } else if (char === '"' && field.length === 0) quoted = true
     else if (char === ",") { row.push(field); field = "" }
-    else if (char === "\\n" || char === "\\r") {
-      if (char === "\\r" && input[i + 1] === "\\n") i++
+    else if (char === "\n" || char === "\r") {
+      if (char === "\r" && input[i + 1] === "\n") i++
       row.push(field); field = ""
       if (row.some(value => value.length > 0)) rows.push(row)
       row = []
