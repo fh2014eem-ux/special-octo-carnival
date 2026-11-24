@@ -16,64 +16,19 @@ const MASTER_CHANNELS = [
 
 const MASTER_CAPACITIES = ["مستفيد", "استشاري", "أخرى", "مورد", "مقاول", "مثقفة"]
 
-// جميع مديريات محافظة تعز الـ 23 كاملة مع عزلها وقراها
-const TAIZ_DIRECTORATES: Record<string, Record<string, string[]>> = {
-  "ماويه": { "حوامره": ["الشجب- اسيراف", "الشجب- الضواح", "الشجب- الحديده"] },
-  "شرعب السلام": { "الاحماس": ["قرية المحطة", "قرية قريته"] },
-  "شرعب الرونه": { "الاماني": ["القرية العليا", "القرية السفلى"] },
-  "مقبنه": { "الاقحوز": ["قرية الخشيلة", "عزلة الاقحوز"] },
-  "المخاء": { "المدينة": ["حي الساحل", "حي العمودي"] },
-  "باب المندب": { "ذباب": ["قرية ذباب"] },
-  "موزع": { "الاهدول": ["قرية موزع"] },
-  "جبل حبشي": { "بلاد الوافي": ["قرية الجند"] },
-  "مشرعه وحدنان": { "مشرعة": ["قرية المحرس"] },
-  "صبر الموادم": { "تباشعة": ["قرية الموادم"] },
-  "المسراخ": { "حصبان": ["صنمات أعلى", "صنمات سفلى"] },
-  "خدير": { "خدير البرامي": ["قرية الدمنة"] },
-  "الصلو": { "الضبة": ["قرية الضبة"] },
-  "الشمايتين": { "التربة": ["حي التربة", "عزلة الأبقور"] },
-  "الوازعيه": { "الشقيرة": ["قرية الشقيرة"] },
-  "حيفان": { "الأعروق": ["قرية الأعروق"] },
-  "المظفر": { "الحصب": ["حي الروضة", "حي الجمهوري"] },
-  "القاهرة": { "ثعبات": ["حي القاع", "حي الثورة"] },
-  "صاله": { "صاله العالي": ["حي الكلائبة"] },
-  "التعزية": { "هجاع": ["قرية الهشمة"] },
-  "المعافر": { "المشاولة العليا": ["قرية درع", "الخورة", "بركة السوعي"] },
-  "المواسط": { "عينان": ["قرية قدس"] },
-  "سامع": { "بني أحمد": ["قرية سامع"] }
+type ReferenceLocation = {
+  governorate: string
+  directorate: string
+  subDistrict: string
+  village: string
 }
 
-type CategoryHierarchy = Record<string, Record<string, string[]>>
-
-// محاكاة محاضر الفتح المسجلة في النظام للربط الإلزامي
-const REGISTERED_MINUTES_DATABASE = [
-  {
-    minutesId: "MIN-2026-001",
-    boxId: "BOX-800-01",
-    projectId: "800-13076",
-    projectName: "بناء جدران حماية واستصلاح أراضي زراعية - مقبنة",
-    sector: "الزراعة والري",
-    funder: "البنك الدولي",
-    officer: "دينا عبدالله علي محمد المسني"
-  },
-  {
-    minutesId: "MIN-2026-002",
-    boxId: "BOX-900-02",
-    projectId: "900-13569",
-    projectName: "حماية الأراضي الزراعية وإنشاء مناسح - التعزية",
-    sector: "الزراعة والري",
-    funder: "منظمة الأغذية والزراعة FAO",
-    officer: "باسم راشد عبدالرؤوف العريقي"
-  }
-]
-
-// عينة شاملة لقواعد المشاريع الـ 508
-const PROJECTS_DATABASE = [
-  { id: "800-13059", name: "مشروع تأهيل المدرجات الزراعية والآبار وتحسين الوضع البيئي والمعيشي لقرية الخشيلة عزلة الاقحوز -مقبنة-تعز", officer: "دينا عبدالله علي محمد المسني" },
-  { id: "800-13350", name: "تأهيل وترميم كرفانات درع والخورة وبركة السوعي لعزلة المشاولة العليا-المعافر-تعز", officer: "باسم راشد عبدالرؤوف العريقي" },
-  { id: "800-13359", name: "تحسين طريق حصبان أعلى صنمات - المسراخ - تعز", officer: "توفيق غالب نعمان العامري" },
-  { id: "800-14020", name: "مشروع رصف الطرق الداخلية وحماية وتصريف السيول - القاهرة والمظفر - تعز", officer: "أحمد مسعد علي" }
-]
+type ReferenceProject = {
+  projectNumber: string
+  projectName: string
+  branch: string
+  data?: Record<string, unknown> | null
+}
 
 export default function NewOperationPage() {
   const router = useRouter()
@@ -90,7 +45,13 @@ export default function NewOperationPage() {
   const [email, setEmail] = useState("")
   const [accusedPerson, setAccusedPerson] = useState("")
 
-  const [province] = useState("تعز")
+  const [province, setProvince] = useState("")
+  const [referenceLocations, setReferenceLocations] = useState<ReferenceLocation[]>([])
+  const [referenceProjects, setReferenceProjects] = useState<ReferenceProject[]>([])
+  const [locationsLoading, setLocationsLoading] = useState(true)
+  const [projectsLoading, setProjectsLoading] = useState(true)
+  const [locationsError, setLocationsError] = useState("")
+  const [projectsError, setProjectsError] = useState("")
   const [directorate, setDirectorate] = useState("")
   const [isolation, setIsolation] = useState("")
   const [village, setVillage] = useState("")
@@ -134,9 +95,10 @@ export default function NewOperationPage() {
   const stage1StatusName = attachment1 ? "جديدة" : "مستلمة"
   const stage2StatusName = isReferred ? "التصنيف والإحالة" : "التصنيف والمعالجة"
 
-  const availableDirectorates = Object.keys(TAIZ_DIRECTORATES)
-  const availableIsolations = directorate && TAIZ_DIRECTORATES[directorate] ? Object.keys(TAIZ_DIRECTORATES[directorate]) : []
-  const availableVillages = directorate && isolation && TAIZ_DIRECTORATES[directorate]?.[isolation] ? TAIZ_DIRECTORATES[directorate][isolation] : []
+  const availableProvinces = Array.from(new Set(referenceLocations.map((row) => row.governorate).filter(Boolean)))
+  const availableDirectorates = Array.from(new Set(referenceLocations.filter((row) => row.governorate === province).map((row) => row.directorate).filter(Boolean)))
+  const availableIsolations = Array.from(new Set(referenceLocations.filter((row) => row.governorate === province && row.directorate === directorate).map((row) => row.subDistrict).filter(Boolean)))
+  const availableVillages = Array.from(new Set(referenceLocations.filter((row) => row.governorate === province && row.directorate === directorate && row.subDistrict === isolation).map((row) => row.village).filter(Boolean)))
 
   const availableSubClasses = mainClass && categoryHierarchy[mainClass] ? Object.keys(categoryHierarchy[mainClass]) : []
   const availableSubClass2s = mainClass && subClass && categoryHierarchy[mainClass]?.[subClass] ? categoryHierarchy[mainClass][subClass] : []
@@ -161,9 +123,40 @@ export default function NewOperationPage() {
     return () => { cancelled = true }
   }, [])
 
-  const filteredProjects = PROJECTS_DATABASE.filter(p => {
-    const matchNo = searchNo ? p.id.includes(searchNo) : true
-    const matchName = searchName ? p.name.includes(searchName) : true
+  useEffect(() => {
+    let cancelled = false
+    async function loadReferenceData() {
+      setLocationsLoading(true)
+      setProjectsLoading(true)
+      setLocationsError("")
+      setProjectsError("")
+      const [locationsResult, projectsResult] = await Promise.allSettled([
+        fetch("/api/reference/locations", { credentials: "same-origin", cache: "no-store" }).then(async (response) => {
+          const result = await response.json()
+          if (!response.ok) throw new Error(result.error || "تعذر تحميل المواقع.")
+          return (result.locations ?? []) as ReferenceLocation[]
+        }),
+        fetch("/api/reference/projects", { credentials: "same-origin", cache: "no-store" }).then(async (response) => {
+          const result = await response.json()
+          if (!response.ok) throw new Error(result.error || "تعذر تحميل المشاريع.")
+          return (result.projects ?? []) as ReferenceProject[]
+        }),
+      ])
+      if (cancelled) return
+      if (locationsResult.status === "fulfilled") setReferenceLocations(locationsResult.value)
+      else setLocationsError(locationsResult.reason instanceof Error ? locationsResult.reason.message : "تعذر تحميل المواقع المرجعية.")
+      if (projectsResult.status === "fulfilled") setReferenceProjects(projectsResult.value)
+      else setProjectsError(projectsResult.reason instanceof Error ? projectsResult.reason.message : "تعذر تحميل المشاريع المرجعية.")
+      setLocationsLoading(false)
+      setProjectsLoading(false)
+    }
+    void loadReferenceData()
+    return () => { cancelled = true }
+  }, [])
+
+  const filteredProjects = referenceProjects.filter((p) => {
+    const matchNo = searchNo ? p.projectNumber.includes(searchNo) : true
+    const matchName = searchName ? p.projectName.includes(searchName) : true
     return matchNo && matchName
   })
 
@@ -202,6 +195,7 @@ export default function NewOperationPage() {
     if (!gender) newErrors.gender = true
     if (!capacity) newErrors.capacity = true
     if (!phone || phone.length !== 9) newErrors.phone = true
+    if (!province) newErrors.province = true
     if (!directorate) newErrors.directorate = true
     if (!isolation) newErrors.isolation = true
     if (!village) newErrors.village = true
@@ -239,13 +233,10 @@ export default function NewOperationPage() {
     return true
   }
 
-  const handleSelectProject = (proj: typeof PROJECTS_DATABASE[0]) => {
-    setSearchNo(proj.id)
-    setSearchName(proj.name)
-    if (proj.officer) {
-      setReferredTo(proj.officer)
-      toast.info(`تم استجلاب ضابط المشروع تلقائياً: ${proj.officer}`)
-    }
+  const handleSelectProject = (proj: ReferenceProject) => {
+    setSearchNo(proj.projectNumber)
+    setSearchName(proj.projectName)
+    toast.success(`تم اختيار المشروع من قاعدة البيانات: ${proj.projectNumber}`)
   }
 
   const handleFinalSave = () => {
@@ -352,25 +343,30 @@ export default function NewOperationPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-lg border">
               <div>
                 <label className="block font-semibold mb-1">المحافظة</label>
-                <Input value={province} disabled className="bg-slate-200 font-bold text-blue-900" />
+                <select value={province} onChange={(e) => { setProvince(e.target.value); setDirectorate(""); setIsolation(""); setVillage(""); setErrors({...errors, province: false, directorate: false, isolation: false, village: false}) }} disabled={locationsLoading || availableProvinces.length === 0} className={`w-full p-2 border rounded-lg bg-white ${errors.province ? "border-red-500 bg-red-50" : ""}`}>
+                  <option value="">{locationsLoading ? "جارٍ تحميل المحافظات..." : "-- اختر المحافظة --"}</option>
+                  {availableProvinces.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+                {locationsError && <p className="text-xs text-red-600 mt-1">{locationsError}</p>}
+                {!locationsLoading && !locationsError && availableProvinces.length === 0 && <p className="text-xs text-amber-700 mt-1">لا توجد مواقع نشطة في قاعدة البيانات.</p>}
               </div>
               <div>
                 <label className="block font-semibold mb-1">المديرية *</label>
-                <select value={directorate} onChange={(e) => { setDirectorate(e.target.value); setIsolation(""); setVillage(""); setErrors({...errors, directorate: false}) }} className={`w-full p-2 border rounded-lg bg-white ${errors.directorate ? 'border-red-500 bg-red-50' : ''}`}>
+                <select value={directorate} disabled={!province || locationsLoading} onChange={(e) => { setDirectorate(e.target.value); setIsolation(""); setVillage(""); setErrors({...errors, directorate: false}) }} className={`w-full p-2 border rounded-lg bg-white ${errors.directorate ? 'border-red-500 bg-red-50' : ''}`}>
                   <option value="">-- اختر المديرية --</option>
                   {availableDirectorates.map(dir => <option key={dir} value={dir}>{dir}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block font-semibold mb-1">العزلة *</label>
-                <select value={isolation} onChange={(e) => { setIsolation(e.target.value); setVillage(""); setErrors({...errors, isolation: false}) }} className={`w-full p-2 border rounded-lg bg-white ${errors.isolation ? 'border-red-500 bg-red-50' : ''}`}>
+                <select value={isolation} disabled={!directorate || locationsLoading} onChange={(e) => { setIsolation(e.target.value); setVillage(""); setErrors({...errors, isolation: false}) }} className={`w-full p-2 border rounded-lg bg-white ${errors.isolation ? 'border-red-500 bg-red-50' : ''}`}>
                   <option value="">-- اختر العزلة --</option>
                   {availableIsolations.map(iso => <option key={iso} value={iso}>{iso}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block font-semibold mb-1">القرية / الحي *</label>
-                <select value={village} onChange={(e) => { setVillage(e.target.value); setErrors({...errors, village: false}) }} className={`w-full p-2 border rounded-lg bg-white ${errors.village ? 'border-red-500 bg-red-50' : ''}`}>
+                <select value={village} disabled={!isolation || locationsLoading} onChange={(e) => { setVillage(e.target.value); setErrors({...errors, village: false}) }} className={`w-full p-2 border rounded-lg bg-white ${errors.village ? 'border-red-500 bg-red-50' : ''}`}>
                   <option value="">-- اختر القرية/الحي --</option>
                   {availableVillages.map(vil => <option key={vil} value={vil}>{vil}</option>)}
                 </select>
@@ -474,7 +470,7 @@ export default function NewOperationPage() {
                   <div className="flex flex-col md:flex-row gap-3 items-start">
                     <div className="w-full md:w-36">
                       <label className="block text-[11px] font-semibold mb-1 text-blue-900">رقم المشروع:</label>
-                      <Input value={searchNo} onChange={(e) => setSearchNo(e.target.value)} placeholder="800-..." className="bg-white font-mono text-xs w-full" />
+                      <Input value={searchNo} onChange={(e) => setSearchNo(e.target.value)} placeholder="رقم المشروع..." className="bg-white font-mono text-xs w-full" />
                     </div>
                     <div className="flex-1 w-full">
                       <label className="block text-[11px] font-semibold mb-1 text-blue-900">اسم المشروع (بحث تفاعلي):</label>
@@ -482,13 +478,16 @@ export default function NewOperationPage() {
                     </div>
                   </div>
 
+                  {projectsLoading && <p className="text-xs text-slate-500 mt-2">جارٍ تحميل المشاريع من قاعدة البيانات...</p>}
+                  {projectsError && <p className="text-xs text-red-600 mt-2">{projectsError}</p>}
+                  {!projectsLoading && !projectsError && referenceProjects.length === 0 && <p className="text-xs text-amber-700 mt-2">لا توجد مشاريع نشطة في قاعدة البيانات حالياً.</p>}
                   {filteredProjects.length > 0 && (searchNo || searchName) && (
                     <div className="mt-2 max-h-36 overflow-y-auto border bg-white rounded-lg p-2 space-y-1">
                       {filteredProjects.map(p => (
-                        <div key={p.id} onClick={() => handleSelectProject(p)} className="p-2 hover:bg-blue-50 cursor-pointer rounded flex justify-between items-center text-[11px]">
-                          <span className="font-bold font-mono text-blue-900">{p.id}</span>
-                          <span className="truncate max-w-md">{p.name}</span>
-                          <span className="text-slate-400 font-normal">[{p.officer}]</span>
+                        <div key={p.projectNumber} onClick={() => handleSelectProject(p)} className="p-2 hover:bg-blue-50 cursor-pointer rounded flex justify-between items-center text-[11px]">
+                          <span className="font-bold font-mono text-blue-900">{p.projectNumber}</span>
+                          <span className="truncate max-w-md">{p.projectName}</span>
+                          <span className="text-slate-400 font-normal">[{p.branch || "—"}]</span>
                         </div>
                       ))}
                     </div>
