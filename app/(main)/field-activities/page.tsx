@@ -52,7 +52,7 @@ export default function FieldManagementPage() {
   // القائمة التشغيلية مشتقة من سجل المشاريع المرجعي الموحد.
   const projectsList = ALL_PROJECTS_DATABASE.map((project) => ({
     ...project,
-    status: "لم تتم التوعية",
+    status: "غير محدد",
     date: "-",
   }))
 
