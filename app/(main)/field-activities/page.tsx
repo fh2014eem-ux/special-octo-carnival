@@ -49,12 +49,12 @@ export default function FieldManagementPage() {
   const [selectedProject, setSelectedProject] = useState<any | null>(null)
   const [filterCardStatus, setFilterCardStatus] = useState<string | null>(null)
 
-  const [projectsList] = useState([
-    { id: "800-13059", name: "مشروع تأهيل المدرجات الزراعية - مقبنة", sector: "الزراعة", funder: "البنك الدولي", officer: "فهيم السامعي", status: "تمت التوعية الأساسية", date: "2024-02-10" },
-    { id: "800-13350", name: "تأهيل وترميم كرفانات درع - المعافر", sector: "الزراعة", funder: "البنك الدولي", officer: "فهيم السامعي", status: "لم تتم التوعية", date: "-" },
-    { id: "800-13359", name: "تحسين طريق حصبان - المسراخ", sector: "الطرق", funder: "البنك الدولي", officer: "فهيم السامعي", status: "لم تتم التوعية", date: "-" },
-    { id: "800-13361", name: "مدرسة الشهيد العلفي - المظفر", sector: "التعليم", funder: "الحكومة الألمانية", officer: "فهيم السامعي", status: "تمت التوعية الأساسية", date: "2024-01-20" }
-  ])
+  // القائمة التشغيلية مشتقة من سجل المشاريع المرجعي الموحد.
+  const projectsList = ALL_PROJECTS_DATABASE.map((project) => ({
+    ...project,
+    status: "لم تتم التوعية",
+    date: "-",
+  }))
 
   const [awarenessExecuter, setAwarenessExecuter] = useState("فريق الشكاوى والامتثال")
   const [awarenessDate, setAwarenessDate] = useState("2026-10-30")
