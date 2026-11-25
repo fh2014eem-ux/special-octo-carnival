@@ -20,17 +20,6 @@ import type {
   StockRequest,
   Responder,
 } from "@/lib/types"
-import {
-  SEED_USERS,
-  SEED_OPERATIONS,
-  SEED_FIELD_REPORTS,
-  SEED_BOXES,
-  SEED_ANALYSES,
-  SEED_FOLLOWS,
-  SEED_STOCK,
-  SEED_STOCK_REQUESTS,
-  SEED_RESPONDERS,
-} from "@/lib/data/seed"
 import { BRANCHES, STATUS } from "@/lib/data/constants"
 import { authClient, useSession } from "@/lib/auth-client"
 
@@ -50,14 +39,27 @@ interface DataState {
 
 const initialData: DataState = {
   users: [],
-  operations: SEED_OPERATIONS,
-  fieldReports: SEED_FIELD_REPORTS,
-  boxes: SEED_BOXES,
-  analyses: SEED_ANALYSES,
-  follows: SEED_FOLLOWS,
-  stock: SEED_STOCK,
-  stockRequests: SEED_STOCK_REQUESTS,
-  responders: SEED_RESPONDERS,
+  operations: [],
+  fieldReports: [],
+  boxes: [],
+  analyses: [],
+  follows: [],
+  stock: [],
+  stockRequests: [],
+  responders: [],
+}
+
+// Remove only known demo records left in older browser storage.
+// Real user-created records are preserved.
+const DEMO_IDS = {
+  operations: new Set(["op1","op2","op3","op4","op5","op6","op7","op8","op9","op10"]),
+  fieldReports: new Set(["f1","f2"]),
+  boxes: new Set(["b1"]),
+  analyses: new Set(["a1"]),
+  follows: new Set(["fo1"]),
+  stock: new Set(["s1","s2","s3","s4"]),
+  stockRequests: new Set(["sr1"]),
+  responders: new Set(["r1","r2","r3"]),
 }
 
 interface StoreContextValue extends DataState {
@@ -91,7 +93,21 @@ function loadData(): DataState {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return initialData
     const parsed = JSON.parse(raw)
-    return { ...initialData, ...parsed, users: [] }
+    const cleanRows = <T extends { id?: string }>(rows: T[] | undefined, demoIds: Set<string>): T[] =>
+      Array.isArray(rows) ? rows.filter((row) => !row.id || !demoIds.has(row.id)) : []
+    return {
+      ...initialData,
+      ...parsed,
+      users: [],
+      operations: cleanRows(parsed.operations, DEMO_IDS.operations),
+      fieldReports: cleanRows(parsed.fieldReports, DEMO_IDS.fieldReports),
+      boxes: cleanRows(parsed.boxes, DEMO_IDS.boxes),
+      analyses: cleanRows(parsed.analyses, DEMO_IDS.analyses),
+      follows: cleanRows(parsed.follows, DEMO_IDS.follows),
+      stock: cleanRows(parsed.stock, DEMO_IDS.stock),
+      stockRequests: cleanRows(parsed.stockRequests, DEMO_IDS.stockRequests),
+      responders: cleanRows(parsed.responders, DEMO_IDS.responders),
+    }
   } catch {
     return initialData
   }
