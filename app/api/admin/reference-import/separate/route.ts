@@ -140,10 +140,37 @@ export async function POST(req: NextRequest) {
       }
       await client.query('INSERT INTO "chm_reference_imports" ("file_name","imported_by","row_counts") VALUES ($1,$2,$3::jsonb)', [file.name, gate.actor, JSON.stringify({ dataset, source: parsed.source, valid: parsed.rows.length, duplicates: parsed.duplicates, rejected: parsed.rejected })])
       await client.query("COMMIT")
-      return NextResponse.json({ success: true, dataset, counts: { source: parsed.source, imported: parsed.rows.length, duplicates: parsed.duplicates, rejected: parsed.rejected }, message: "تم تحديث المجموعة المحددة فقط بنجاح." })
+      return NextResponse.json({ success: true, dataset, counts: { source: parsed.source, valid: parsed.rows.length, duplicates: parsed.duplicates, rejected: parsed.rejected }, message: "تم تحديث المجموعة المحددة فقط بنجاح." })
     } catch (error) { await client.query("ROLLBACK"); throw error } finally { client.release() }
   } catch (error) {
     const message = error instanceof Error ? error.message : "تعذر استيراد الملف."
     return NextResponse.json({ success: false, message }, { status: 400 })
+  }
+}
+
+
+/** حالة مرجعية موثوقة من Neon للتحقق بعد كل عملية استيراد. */
+export async function GET() {
+  const gate = await requireAdmin()
+  if (!gate.ok) return NextResponse.json({ success: false, message: gate.message }, { status: gate.status })
+  try {
+    const [locations, projects, categories, imports] = await Promise.all([
+      pool.query('SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE active = TRUE)::int AS active, COUNT(*) FILTER (WHERE active = FALSE)::int AS inactive FROM public.chm_reference_locations'),
+      pool.query('SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE active = TRUE)::int AS active, COUNT(*) FILTER (WHERE active = FALSE)::int AS inactive FROM public.chm_reference_projects'),
+      pool.query('SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE active = TRUE)::int AS active, COUNT(*) FILTER (WHERE active = FALSE)::int AS inactive FROM public.chm_reference_categories'),
+      pool.query('SELECT file_name, row_counts, created_at FROM public.chm_reference_imports ORDER BY created_at DESC LIMIT 10'),
+    ])
+    return NextResponse.json({
+      success: true,
+      counts: {
+        locations: locations.rows[0],
+        projects: projects.rows[0],
+        categories: categories.rows[0],
+      },
+      recentImports: imports.rows,
+    })
+  } catch (error) {
+    console.error("تعذر قراءة حالة البيانات المرجعية", error)
+    return NextResponse.json({ success: false, message: "تعذر قراءة حالة البيانات المرجعية من Neon." }, { status: 503 })
   }
 }
