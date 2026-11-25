@@ -16,6 +16,21 @@ const MASTER_CHANNELS = [
 
 const MASTER_CAPACITIES = ["مستفيد", "استشاري", "أخرى", "مورد", "مقاول", "مثقفة"]
 
+type CategoryHierarchy = Record<string, Record<string, string[]>>
+
+type RegisteredMinutes = {
+  minutesId: string
+  boxId: string
+  projectId: string
+  projectName: string
+  sector?: string
+  funder?: string
+  officer: string
+}
+
+// لا تُعرض محاضر تجريبية؛ تُملأ القائمة فقط عند ربط سجل المحاضر الفعلي.
+const REGISTERED_MINUTES_DATABASE: RegisteredMinutes[] = []
+
 type ReferenceLocation = {
   governorate: string
   directorate: string
@@ -63,7 +78,7 @@ export default function NewOperationPage() {
 
   // حقل رقم المحضر المربوط بصندوق الشكاوى
   const [selectedMinutesId, setSelectedMinutesId] = useState("")
-  const [autoFetchedMinutesData, setAutoFetchedMinutesData] = useState<any | null>(null)
+  const [autoFetchedMinutesData, setAutoFetchedMinutesData] = useState<RegisteredMinutes | null>(null)
 
   // المرحلة الثانية
   const [mainClass, setMainClass] = useState("")
@@ -446,12 +461,13 @@ export default function NewOperationPage() {
                     <label className="block font-semibold mb-1">اختر رقم المحضر من السجل المعتمد *</label>
                     <select value={selectedMinutesId} onChange={(e) => handleSelectMinutes(e.target.value)} className="w-full p-2.5 border rounded-lg bg-white font-bold font-mono text-slate-800">
                       <option value="">-- اختر رقم المحضر المقيد مسبقاً --</option>
-                      {REGISTERED_MINUTES_DATABASE.map(m => (
+                      {REGISTERED_MINUTES_DATABASE.map((m: RegisteredMinutes) => (
                         <option key={m.minutesId} value={m.minutesId}>
                           {m.minutesId} | صندوق: {m.boxId} | مشروع: {m.projectId} - {m.projectName}
                         </option>
                       ))}
                     </select>
+                    {REGISTERED_MINUTES_DATABASE.length === 0 && <p className="mt-2 text-xs text-amber-700">لا توجد محاضر فتح مسجلة في قاعدة البيانات بعد؛ لن تظهر بيانات تجريبية هنا.</p>}
                   </div>
 
                   {autoFetchedMinutesData && (
