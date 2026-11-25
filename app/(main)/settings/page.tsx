@@ -1,12 +1,15 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 type Counts = { source: number; valid: number; duplicates: number; rejected: number }
 type Preview = { success: boolean; message?: string; dataset?: string; counts?: Counts; sample?: Record<string, string>[] }
+type StatusCount = { total: number; active: number; inactive: number }
+type ReferenceStatus = { locations: StatusCount; projects: StatusCount; categories: StatusCount }
+
 
 export default function SettingsPage() {
   const [dataset, setDataset] = useState<"locations" | "projects">("locations")
@@ -14,6 +17,23 @@ export default function SettingsPage() {
   const [preview, setPreview] = useState<Preview | null>(null)
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
+  const [status, setStatus] = useState<ReferenceStatus | null>(null)
+  const [statusError, setStatusError] = useState<string | null>(null)
+
+  async function refreshStatus() {
+    try {
+      const response = await fetch("/api/admin/reference-import/separate", { credentials: "same-origin", cache: "no-store" })
+      const result = await response.json()
+      if (!response.ok || !result.success) throw new Error(result.message || "تعذر قراءة حالة Neon.")
+      setStatus(result.counts)
+      setStatusError(null)
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "تعذر قراءة حالة Neon.")
+    }
+  }
+
+  useEffect(() => { void refreshStatus() }, [])
+
 
   async function send(mode: "preview" | "commit") {
     if (!file) { toast.error("يرجى اختيار ملف Excel أو CSV أولاً."); return }
@@ -32,6 +52,7 @@ export default function SettingsPage() {
         toast.success("اكتمل فحص الملف. راجع الأعداد قبل الاعتماد.")
       } else {
         setDone(true); setPreview(result)
+        await refreshStatus()
         toast.success(result.message || "تم تحديث البيانات المرجعية.")
       }
     } catch (error) {
@@ -46,6 +67,24 @@ export default function SettingsPage() {
         <h1 className="text-xl font-black text-slate-900">إعدادات النظام وتحديث قواعد البيانات</h1>
         <p className="text-xs text-slate-500 mt-2">تحديث مستقل لملف المواقع أو ملف المشاريع. لا تتأثر التصنيفات أو مجموعة البيانات الأخرى عند الاستيراد.</p>
       </div>
+      <Card className="bg-white border">
+        <CardHeader className="bg-slate-50 border-b py-3"><CardTitle className="text-sm font-bold">الحالة الفعلية للبيانات في Neon</CardTitle></CardHeader>
+        <CardContent className="p-4">
+          {statusError && <p className="text-xs text-red-700">{statusError}</p>}
+          {!status && !statusError && <p className="text-xs text-slate-500">جارٍ قراءة الأعداد من قاعدة البيانات...</p>}
+          {status && <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {([{ key: "locations", label: "المواقع" }, { key: "projects", label: "المشاريع" }, { key: "categories", label: "التصنيفات" }] as const).map(item => {
+              const count = status[item.key]
+              return <div key={item.key} className="rounded-lg border p-3">
+                <p className="font-bold text-slate-800">{item.label}</p>
+                <p className="mt-1 text-xl font-black tabular-nums">{count.active.toLocaleString("en-US")}</p>
+                <p className="text-[11px] text-slate-500">نشط من إجمالي {count.total.toLocaleString("en-US")} — غير نشط {count.inactive.toLocaleString("en-US")}</p>
+              </div>
+            })}
+          </div>}
+          <div className="mt-3"><Button type="button" variant="outline" size="sm" onClick={() => void refreshStatus()}>تحديث حالة Neon</Button></div>
+        </CardContent>
+      </Card>
       <Card className="bg-white border">
         <CardHeader className="bg-slate-50 border-b py-3">
           <CardTitle className="text-sm font-bold">📥 استيراد البيانات المرجعية من Excel أو CSV</CardTitle>
