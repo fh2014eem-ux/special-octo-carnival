@@ -1,13 +1,19 @@
-// استيراد واستخراج البيانات الفعلية من ملفات الأكسل المرفقة
+// مصدر المشاريع الموحد: سجل المشاريع المرجعي الكامل، وليس قائمة تجريبية محلية.
+import { PROJECTS } from "@/lib/data/projects"
 
-export const ALL_PROJECTS_DATABASE = [
-  { id: "800-13059", name: "مشروع تأهيل المدرجات الزراعية والآبار وتحسين الوضع البيئي والمعيشي لقرية الخشيلة عزلة الاقحوز -مقبنة-تعز", sector: "تدخل متنوع", funder: "البنك الدولي", officer: "دينا عبدالله علي محمد المسني", startDate: "2024-01-01", endDate: "2024-12-31", progress: "85%" },
-  { id: "800-13350", name: "تأهيل وترميم كرفانات درع والخورة وبركة السوعي لعزلة المشاولة العليا-المعافر-تعز", sector: "الزراعة والتنمية الريفية", funder: "البنك الدولي", officer: "باسم راشد عبدالرؤوف العريقي", startDate: "2024-04-21", endDate: "2024-11-30", progress: "92%" },
-  { id: "800-13359", name: "تحسين طريق حصبان أعلى صنمات - المسراخ - تعز", sector: "الطرق", funder: "البنك الدولي", officer: "توفيق غالب نعمان العامري", startDate: "2024-09-05", endDate: "2025-03-31", progress: "67%" },
-  { id: "800-13361", name: "مدرسة الشهيد العلفي- حي عمد- مديرية المظفر- محافظة تعز", sector: "التعليم", funder: "الحكومة الألمانية", officer: "عبدالباقي قائد غالب البرهمي", startDate: "2024-01-15", endDate: "2024-09-30", progress: "95%" },
-  { id: "800-13366", name: "مدرسة 22 مايو - حي عصيفرة - مديرية القاهرة - محافظة تعز", sector: "التعليم", funder: "الحكومة الألمانية", officer: "عبدالباقي قائد غالب البرهمي", startDate: "2024-02-01", endDate: "2024-10-31", progress: "88%" }
-  // (ملاحظة: يمكنك إضافة باقي مشاريع الـ 508 هنا بنفس النسق المباشر من ملف المشاريع.xlsx)
-];
+export const ALL_PROJECTS_DATABASE = PROJECTS.map((p) => ({
+  id: p.number || p.id,
+  name: p.name,
+  sector: p.sectorMain || p.sectorSub || "",
+  funder: p.funder || "",
+  officer: p.officer || "",
+  startDate: p.startDate || "",
+  endDate: p.endDate || "",
+  branch: p.branch || "",
+  status: p.status || "",
+  agreementNumber: p.agreementNumber || "",
+  contractNumber: p.contractNumber || "",
+}))
 
 export const LOCATIONS_DATABASE = {
   governorates: ["تعز", "عدن", "سقطرى", "المهرة", "شبوة", "لحج", "الضالع", "أبين", "مأرب", "حضرموت"],
