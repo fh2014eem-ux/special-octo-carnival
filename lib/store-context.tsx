@@ -70,6 +70,7 @@ interface StoreContextValue extends DataState {
   changePassword: (oldPass: string, newPass: string) => Promise<{ ok: boolean; error?: string }>
   // scoped views (respect branch unless admin)
   scopedOperations: Operation[]
+  refreshOperations: () => Promise<void>
   // actions
   addOperation: (op: Partial<Operation> & { type: Operation["type"] }) => Operation
   updateOperation: (id: string, patch: Partial<Operation>) => void
@@ -122,6 +123,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [dataReady, setDataReady] = useState(false)
   const authSession = useSession()
 
+  const refreshOperations = useCallback(async () => {
+    const response = await fetch("/api/operations", { cache: "no-store" })
+    const body = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(body.error || "تعذر تحميل العمليات من قاعدة البيانات.")
+    setData(current => ({ ...current, operations: Array.isArray(body.operations) ? body.operations : [] }))
+  }, [])
+
   // Hydrate non-authentication UI data only. Authentication always comes from Better Auth.
   useEffect(() => {
     setData(loadData())
@@ -157,6 +165,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
     setReady(true)
   }, [dataReady, authSession.data, authSession.isPending])
+
+  useEffect(() => {
+    if (!currentUser) return
+    void refreshOperations().catch((error) => {
+      console.error("CHM_OPERATIONS_REFRESH_FAILED", error)
+    })
+  }, [currentUser?.id, refreshOperations])
 
   // persist data
   useEffect(() => {
@@ -435,6 +450,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     logout,
     changePassword,
     scopedOperations,
+    refreshOperations,
     addOperation,
     updateOperation,
     addFieldReport,
