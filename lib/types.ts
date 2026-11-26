@@ -98,6 +98,7 @@ export interface Operation {
   village?: string
   subject: string
   description: string
+  additionalDetails?: string
   attachments: string[]
   against?: string
   mainClass?: string
