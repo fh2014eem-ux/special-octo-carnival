@@ -40,6 +40,8 @@ interface OpeningMinutesItem {
   inquiries: number
   compliments: number
   delayStatus: "🟢 ضمن المدة" | "🟡 تأخير بسيط" | "🔴 متأخر"
+  totalDocuments?: number
+  attachmentNames?: string[]
 }
 
 export default function ComplaintBoxesPage() {
@@ -226,6 +228,8 @@ export default function ComplaintBoxesPage() {
       expectedDate,
       totalAccepted,
       totalRejected,
+      totalDocuments,
+      attachmentNames: minutesFiles.map(file => file.name),
       rejectionReason,
       complaints,
       reports,
@@ -577,6 +581,7 @@ export default function ComplaintBoxesPage() {
                   <div className="flex items-center justify-between gap-2"><strong className="text-blue-950">تفاصيل المحضر {selectedMinute.minutesId}</strong><Button size="sm" variant="outline" onClick={() => setSelectedMinute(null)}>إغلاق التفاصيل</Button></div>
                   <p>رقم الصندوق: {selectedMinute.boxId} — المشروع: {selectedMinute.projectId} / {selectedMinute.projectName}</p>
                   <p>تاريخ الفتح: {selectedMinute.openingDate} — تاريخ المحضر: {selectedMinute.minutesDate} — تاريخ التسليم: {selectedMinute.deliveryDate}</p>
+                  <p>إجمالي الوثائق: {selectedMinute.totalDocuments ?? "—"} — المرفقات: {selectedMinute.attachmentNames?.join("، ") || "—"}</p>
                   <p>الوثائق المقبولة: {selectedMinute.totalAccepted} — المرفوضة: {selectedMinute.totalRejected} — الشكاوى: {selectedMinute.complaints} — البلاغات: {selectedMinute.reports} — الطلبات: {selectedMinute.requests} — المقترحات: {selectedMinute.suggestions} — الاستعلامات: {selectedMinute.inquiries} — الإطراءات: {selectedMinute.compliments}</p>
                 </div>
               )}
