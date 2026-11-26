@@ -1,6 +1,24 @@
 -- CHM-SFD: durable field monitoring, box opening records, and additional operation data.
 ALTER TABLE "ComplaintOperation"
-  ADD COLUMN "additionalData" TEXT;
+  ADD COLUMN "branch" TEXT NOT NULL DEFAULT 'الإدارة العامة',
+  ADD COLUMN "createdById" TEXT,
+  ADD COLUMN "additionalData" TEXT,
+  ADD CONSTRAINT "ComplaintOperation_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+CREATE INDEX "ComplaintOperation_branch_createdAt_idx" ON "ComplaintOperation"("branch", "createdAt");
+
+CREATE TABLE "ComplaintOperationAttachment" (
+  "id" TEXT NOT NULL,
+  "operationId" TEXT NOT NULL,
+  "stage" TEXT NOT NULL,
+  "fileName" TEXT NOT NULL,
+  "mimeType" TEXT NOT NULL,
+  "fileSize" INTEGER NOT NULL,
+  "fileContent" BYTEA NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "ComplaintOperationAttachment_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "ComplaintOperationAttachment_operationId_fkey" FOREIGN KEY ("operationId") REFERENCES "ComplaintOperation"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE INDEX "ComplaintOperationAttachment_operationId_idx" ON "ComplaintOperationAttachment"("operationId");
 
 CREATE TABLE "FieldMonitoringVisit" (
   "id" TEXT NOT NULL,
