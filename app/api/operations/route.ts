@@ -92,11 +92,12 @@ export async function POST(request: Request) {
   const projectNumber = value("projectNo")
   const projectName = value("projectName")
   if (projectNumber) {
-    const project = await prisma.$queryRaw<Array<{ projectName: string }>>`
-      SELECT project_name AS "projectName" FROM public.chm_reference_projects
+    const project = await prisma.$queryRaw<Array<{ projectName: string; branch: string | null }>>`
+      SELECT project_name AS "projectName", branch FROM public.chm_reference_projects
       WHERE active = true AND project_number = ${projectNumber} LIMIT 1
     `
-    if (!project[0] || (projectName && project[0].projectName !== projectName)) {
+    const isAdmin = session.user.role === "مدير النظام" || session.user.role === "إدارة عامة" || branch === "الإدارة العامة"
+    if (!project[0] || (projectName && project[0].projectName !== projectName) || (!isAdmin && project[0].branch && project[0].branch !== branch)) {
       return NextResponse.json({ error: "المشروع المحدد غير موجود في المرجع المعتمد أو أن اسمه لا يطابق رقمه." }, { status: 422 })
     }
   }
@@ -107,6 +108,8 @@ export async function POST(request: Request) {
   if (requiredAttachment && !files.some(item => item.stage === "attachment1")) {
     return NextResponse.json({ error: "إرفاق مستند الاستقبال إلزامي للشكاوى والبلاغات." }, { status: 422 })
   }
+  const allowedMime = new Set(["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"])
+  if (files.some(item => !(item.file.type.startsWith("image/") || allowedMime.has(item.file.type)))) return NextResponse.json({ error: "نوع أحد المرفقات غير مسموح. استخدم صورة أو PDF أو Word أو Excel." }, { status: 422 })
   if (files.some(item => item.file.size > 3 * 1024 * 1024)) return NextResponse.json({ error: "حجم كل مرفق يجب ألا يتجاوز 3 ميجابايت." }, { status: 422 })
   if (files.reduce((sum, item) => sum + item.file.size, 0) > 4 * 1024 * 1024) return NextResponse.json({ error: "إجمالي المرفقات يجب ألا يتجاوز 4 ميجابايت." }, { status: 422 })
 
