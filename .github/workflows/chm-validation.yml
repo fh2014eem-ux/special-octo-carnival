@@ -1,9 +1,11 @@
 name: CHM-SFD validation
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - chm-source-extracted
+      - chm-final-ui-requirements-2026-11-26
     paths:
       - "app/**"
       - "components/**"
