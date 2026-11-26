@@ -25,17 +25,21 @@ export function ProcessingPanel({ op }: { op: Operation }) {
   // شرط إظهار رقم المحضر فقط مع قناة "صندوق الشكاوى"
   const isComplaintBox = op.channel === "صندوق الشكاوى"
 
-  function saveProcessing() {
-    updateOperation(op.id, {
-      mainClass,
-      subClass,
-      sensitivity,
-      minutesNo: isComplaintBox ? (minutesNo.trim() || undefined) : undefined,
-      officerReply: officerReply.trim() || undefined,
-      responder: responder || undefined,
-      status: status === STATUS.NEW ? STATUS.PROCESSING : status,
-    })
-    toast.success("تم حفظ بيانات المعالجة والتصنيف")
+  async function saveProcessing() {
+    try {
+      await updateOperation(op.id, {
+        mainClass,
+        subClass,
+        sensitivity,
+        minutesNo: isComplaintBox ? (minutesNo.trim() || undefined) : undefined,
+        officerReply: officerReply.trim() || undefined,
+        responder: responder || undefined,
+        status: status === STATUS.NEW ? STATUS.PROCESSING : status,
+      })
+      toast.success("تم حفظ بيانات المعالجة والتصنيف في قاعدة البيانات")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر حفظ بيانات المعالجة")
+    }
   }
 
   const [closure, setClosure] = useState(op.closure ?? "")
@@ -49,7 +53,7 @@ export function ProcessingPanel({ op }: { op: Operation }) {
     setReplyChannels((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]))
   }
 
-  function closeOperation() {
+  async function closeOperation() {
     if (!closure.trim()) {
       toast.error("يرجى إدخال ملخص الإجراء المتخذ للإغلاق.")
       return
@@ -63,14 +67,18 @@ export function ProcessingPanel({ op }: { op: Operation }) {
       return
     }
 
-    updateOperation(op.id, {
-      closure: closure.trim(),
-      replyChannels,
-      message: message.trim() || undefined,
-      evaluation: evaluation || undefined,
-      status: STATUS.CLOSED,
-    })
-    toast.success("تم إغلاق العملية بنجاح")
+    try {
+      await updateOperation(op.id, {
+        closure: closure.trim(),
+        replyChannels,
+        message: message.trim() || undefined,
+        evaluation: evaluation || undefined,
+        status: STATUS.CLOSED,
+      })
+      toast.success("تم إغلاق العملية وحفظها في قاعدة البيانات")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر إغلاق العملية")
+    }
   }
 
   const isClosed = op.status === STATUS.CLOSED
