@@ -96,6 +96,7 @@ function UserMenu() {
   const initials = currentUser.username.slice(0, 2).toUpperCase()
 
   return (
+    <div className="flex flex-col items-end gap-0.5">
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
@@ -152,6 +153,11 @@ function UserMenu() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <Button type="button" variant="ghost" size="sm" onClick={logout} className="h-5 px-2 text-[10px] leading-none text-muted-foreground hover:text-destructive">
+      <LogOut className="size-3" />
+      تسجيل الخروج
+    </Button>
+    </div>
   )
 }
 
