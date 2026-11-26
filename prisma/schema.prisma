@@ -55,6 +55,8 @@ model ComplaintOperation {
   // الموضوع والتفاصيل
   subject           String
   description       String
+  additionalData    String?
+  branch            String?
   attachmentUrl     String?
   
   // التصنيف والحساسية (للشكاوى والبلاغات)
@@ -182,4 +184,39 @@ model AuditLog {
   performedBy String
   timestamp   DateTime @default(now())
   details     String?
+}
+
+// سجل زيارات المتابعة الميدانية والرقابة
+model FieldMonitoringVisit {
+  id                 String   @id
+  visitNumber        String   @unique
+  projectNumber      String
+  projectName        String
+  branch             String
+  startDate          DateTime @db.Date
+  endDate            DateTime @db.Date
+  executor           String
+  team               String?
+  objective          String
+  location           String?
+  visitNotes         String?
+  result             String?
+  recommendations   String?
+  requiredActions    String?
+  followupStartDate  DateTime? @db.Date
+  followupEndDate    DateTime? @db.Date
+  followupStatus     String?
+  nextVisitDate      DateTime? @db.Date
+  projectStatus      String?
+  projectType        String?
+  awarenessStatus    String?
+  photoAttachments   Json     @default("[]")
+  reportAttachments  Json     @default("[]")
+  createdBy          String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+
+  @@index([projectNumber])
+  @@index([branch])
+  @@index([startDate])
 }
