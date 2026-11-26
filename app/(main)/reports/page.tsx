@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 export default function ReportsAndSyncPage() {
-تات الأكسل والمستندات
   const handleExportExcel = (type: string) => {
     toast.success(`جاري استخراج وتنزيل تقارير ${type} بصيغة Excel...`)
     // استدعاء رابط التنزيل الداخلي
