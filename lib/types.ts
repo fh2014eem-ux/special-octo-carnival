@@ -103,6 +103,7 @@ export interface Operation {
   description: string
   additionalData?: string
   attachments: string[]
+  attachmentRecords?: { id: string; stage: string; fileName: string; mimeType: string; fileSize: number }[]
   against?: string
   mainClass?: string
   subClass?: string
