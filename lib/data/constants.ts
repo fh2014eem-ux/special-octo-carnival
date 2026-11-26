@@ -96,7 +96,7 @@ export const BRANCHES: Record<string, Branch> = {
   Hodeidah: { key: "Hodeidah", name: "فرع الحديدة", provinces: ["الحديدة"], fixedProvince: "الحديدة" },
   Ibb: { key: "Ibb", name: "فرع إب", provinces: ["إب"], fixedProvince: "إب" },
   Marib: { key: "Marib", name: "مكتب مأرب", provinces: ["مأرب"], fixedProvince: "مأرب" },
-  General: { key: "General", name: "الإدارة العامة", provinces: ["تعز", "عدن", "حضرموت", "مأرب"] },
+  General: { key: "General", name: "الإدارة العامة", provinces: ["تعز", "عدن", "حضرموت", "مأرب", "صنعاء", "أمانة العاصمة", "عمران", "حجة", "الحديدة", "إب"] },
 }
 
 export const BRANCH_NAMES = Object.values(BRANCHES).map((b) => b.name)
