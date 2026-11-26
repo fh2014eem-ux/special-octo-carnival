@@ -47,9 +47,10 @@ type ReferenceProject = {
 
 export default function NewOperationPage() {
   const router = useRouter()
-  const { addOperation } = useStore()
+  const { refreshOperations } = useStore()
 
   const [step, setStep] = useState(1)
+  const [savingOperation, setSavingOperation] = useState(false)
   const [type, setType] = useState("")
   const [channel, setChannel] = useState("")
   const [name, setName] = useState("")
@@ -255,23 +256,38 @@ export default function NewOperationPage() {
     toast.success(`تم اختيار المشروع من قاعدة البيانات: ${proj.projectNumber}`)
   }
 
-  const handleFinalSave = () => {
+  const handleFinalSave = async () => {
     const computedStatus = type === "إطراء" ? "مغلقة" : stage1StatusName
     const computedEvaluation = isSimpleType ? "محقة" : finalEvaluation
-
-    addOperation({
+    const form = new FormData()
+    const fields: Record<string, string> = {
       type, channel, name, gender, capacity, phone, altPhone, email, accusedPerson,
       province, directorate, isolation, village, subject, description, additionalData,
       mainClass: isSimpleType ? type : mainClass, subClass, subClass2, sensitivity, priority,
       projectNo: searchNo, projectName: searchName, referredTo, internalReply,
       finalClosingText: isSimpleType ? "معالجة تلقائية عملية مبسطة" : finalClosingText,
-      closingChannel: closingChannel || "الرسائل النصية",
-      replyMessage, finalEvaluation: computedEvaluation, requiresAnalysis: isSimpleType ? "لا" : requiresAnalysis,
-      status: computedStatus
-    })
+      closingChannel: closingChannel || "الرسائل النصية", replyMessage,
+      finalEvaluation: computedEvaluation, requiresAnalysis: isSimpleType ? "لا" : requiresAnalysis,
+      status: computedStatus,
+    }
+    Object.entries(fields).forEach(([key, value]) => form.set(key, value || ""))
+    if (attachment1) form.set("attachment1", attachment1)
+    if (attachment2) form.set("attachment2", attachment2)
+    if (attachment3) form.set("attachment3", attachment3)
 
-    toast.success(`تم حفظ العملية بنجاح! الحالة المسجلة: "${computedStatus}"`)
-    router.push("/operations")
+    setSavingOperation(true)
+    try {
+      const response = await fetch("/api/operations", { method: "POST", body: form })
+      const body = await response.json()
+      if (!response.ok) throw new Error(body.error || "تعذر حفظ العملية")
+      await refreshOperations()
+      toast.success(`تم حفظ العملية ${body.operation?.operationNo || ""} في قاعدة البيانات بنجاح. الحالة: "${computedStatus}"`)
+      router.push("/operations")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر حفظ العملية في قاعدة البيانات.")
+    } finally {
+      setSavingOperation(false)
+    }
   }
 
   return (
@@ -536,7 +552,7 @@ export default function NewOperationPage() {
 
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>السابق</Button>
-              <Button onClick={() => { if(validateStep2()) { if(type === "إطراء") { handleFinalSave(); } else { setStep(3); } } }} className="bg-blue-900 text-white font-bold">
+              <Button onClick={() => { if(validateStep2()) { if(type === "إطراء") { void handleFinalSave(); } else { setStep(3); } } }} disabled={savingOperation} className="bg-blue-900 text-white font-bold">
                 {type === "إطراء" ? "حفظ نهائي (إطراء مغلق مباشرة) ✓" : "التالي: الرد والإغلاق ➔"}
               </Button>
             </div>
@@ -602,8 +618,8 @@ export default function NewOperationPage() {
 
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(2)}>السابق</Button>
-              <Button onClick={handleFinalSave} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6">
-                حفظ نهائي وإغلاق العملية ✓
+              <Button onClick={handleFinalSave} disabled={savingOperation} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6">
+                {savingOperation ? "جارٍ الحفظ..." : "حفظ نهائي وإغلاق العملية ✓"}
               </Button>
             </div>
           </CardContent>
