@@ -5,12 +5,14 @@ import { pool } from "@/lib/db"
 
 async function sendPasswordResetEmail(to: string, url: string) {
   const apiKey = process.env.RESEND_API_KEY
+  const from = process.env.CHM_RESEND_FROM
   if (!apiKey || apiKey === "REPLACE_WITH_RESEND_API_KEY") throw new Error("Password reset email provider is not configured")
+  if (!from || !/^[^\\s<>]+@[^\\s<>]+$/.test(from)) throw new Error("Verified password reset sender is not configured")
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: "CHM-SFD <onboarding@resend.dev>",
+      from: `CHM-SFD <${from}>`,
       to: [to],
       subject: "إعادة تعيين كلمة مرور نظام الشكاوى CHM-SFD",
       html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.9;color:#172033"><h2>إعادة تعيين كلمة المرور</h2><p>تلقينا طلباً لإعادة تعيين كلمة المرور لحسابك في نظام الشكاوى والبلاغات.</p><p><a href="${url}" style="display:inline-block;background:#155eef;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none">تعيين كلمة مرور جديدة</a></p><p>إذا لم تطلب ذلك، فتجاهل هذه الرسالة. الرابط صالح لمدة ساعة واحدة.</p><p>نظام CHM-SFD</p></div>`
