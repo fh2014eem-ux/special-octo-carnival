@@ -17,7 +17,7 @@ type ComplaintBoxItem = {
 type OpeningMinutesItem = {
   id: string; minuteNumber: string; boxNumber: string; projectNumber: string; projectName: string
   openingDate: string; minutesDate: string; deliveryDate: string; entryDate: string; expectedDate: string
-  totalDocuments: number; acceptedAttachments: number; rejectedAttachments: number; rejectionReasons?: string | null
+  totalDocuments: number; totalOperations: number; acceptedAttachments: number; rejectedAttachments: number; rejectionReasons?: string | null
   complaintsCount: number; reportsCount: number; requestsCount: number; proposalsCount: number
   inquiriesCount: number; praisesCount: number; delayStatus: string; attachments: Attachment[]
 }
