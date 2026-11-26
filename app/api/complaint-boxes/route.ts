@@ -59,7 +59,8 @@ export async function POST(request: Request) {
     SELECT project_name AS "projectName", branch FROM public.chm_reference_projects
     WHERE active = true AND project_number = ${projectNumber} LIMIT 1
   `
-  if (!project[0] || project[0].projectName !== projectName || (!scope.isAdmin && project[0].branch && project[0].branch !== scope.branch)) return NextResponse.json({ error: "المشروع غير موجود في قاعدة المشاريع المرجعية أو لا يتبع الفرع الحالي." }, { status: 422 })
+  const referenceBranch = scope.branch === "فرع المكلا" ? "فرع حضرموت" : scope.branch
+  if (!project[0] || project[0].projectName !== projectName || (!scope.isAdmin && project[0].branch && project[0].branch !== referenceBranch)) return NextResponse.json({ error: "المشروع غير موجود في قاعدة المشاريع المرجعية أو لا يتبع الفرع الحالي." }, { status: 422 })
 
   const files = form.getAll("images").filter((value): value is File => value instanceof File && value.size > 0)
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0)
