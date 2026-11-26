@@ -17,7 +17,18 @@ type ManagedUser = {
   createdAt: string
 }
 
-const BRANCHES = ["فرع تعز", "فرع عدن", "فرع حضرموت", "مكتب مأرب", "الإدارة العامة"]
+const BRANCHES = [
+  "فرع تعز",
+  "فرع عدن",
+  "فرع المكلا",
+  "مكتب مأرب",
+  "فرع صنعاء",
+  "فرع عمران",
+  "فرع حجة",
+  "فرع الحديدة",
+  "فرع إب",
+  "الإدارة العامة",
+]
 
 export default function UsersManagementPage() {
   const [users, setUsers] = useState<ManagedUser[]>([])
