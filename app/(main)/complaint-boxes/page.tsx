@@ -125,13 +125,10 @@ export default function ComplaintBoxesPage() {
   const [lastSavedMinutesId, setLastSavedMinutesId] = useState("")
   const [selectedMinute, setSelectedMinute] = useState<OpeningMinutesItem | null>(null)
   const [minutesFiles, setMinutesFiles] = useState<File[]>([])
-  const [totalDocuments, setTotalDocuments] = useState<number>(5)
+  const [totalDocuments, setTotalDocuments] = useState<number>(6)
 
-  const [minutesOpeningDate, setMinutesOpeningDate] = useState("2026-10-30")
-  const [minutesDate, setMinutesDate] = useState("2026-10-30")
-  const [deliveryDate, setDeliveryDate] = useState("2026-10-30")
-  const [entryDate] = useState("2026-10-30")
-  const [expectedDate, setExpectedDate] = useState("2026-10-28")
+  const [minutesDate, setMinutesDate] = useState("")
+
 
   const [totalAccepted, setTotalAccepted] = useState<number>(5)
   const [totalRejected, setTotalRejected] = useState<number>(0)
@@ -176,6 +173,30 @@ export default function ComplaintBoxesPage() {
     }
   ])
 
+  const todayDate = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+  const latestMinute = registeredMinutes[0]
+  const lastOpeningDate = latestMinute?.openingDate ?? ""
+  const lastMinuteDate = latestMinute?.minutesDate ?? ""
+  const addDays = (value: string, days: number) => {
+    const date = new Date(`${value}T00:00:00`)
+    date.setDate(date.getDate() + days)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+  }
+  const nextWeeklyDate = (base: string) => {
+    let candidate = base || todayDate
+    while (candidate <= todayDate) candidate = addDays(candidate, 7)
+    return candidate
+  }
+  const nextWednesday = () => {
+    const date = new Date(`${todayDate}T00:00:00`)
+    const daysUntilWednesday = (3 - date.getDay() + 7) % 7 || 7
+    return addDays(todayDate, daysUntilWednesday)
+  }
+  const expectedDate = lastOpeningDate ? nextWeeklyDate(lastOpeningDate) : nextWednesday()
+  const deliveryDate = latestMinute?.deliveryDate ? nextWeeklyDate(latestMinute.deliveryDate) : addDays(expectedDate, 1)
+  const minutesOpeningDate = todayDate
+  const entryDate = todayDate
+
   const handleSelectBoxForMinutes = (boxId: string) => {
     setSelectedBoxId(boxId)
     const box = registeredBoxes.find(b => b.boxId === boxId)
@@ -208,6 +229,10 @@ export default function ComplaintBoxesPage() {
     }
     if (!isValidDocumentCount) {
       toast.error("عدد الوثائق يجب أن يساوي المقبولة + المرفوضة.")
+      return
+    }
+    if (!minutesDate) {
+      toast.error("يرجى إدخال تاريخ استلام المحضر.")
       return
     }
     if (minutesFiles.length === 0) {
@@ -433,27 +458,13 @@ export default function ComplaintBoxesPage() {
 
               <div className="space-y-2">
                 <span className="font-bold text-slate-900">2. تواريخ المحضر وتتبع التأخير ⏱️:</span>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border">
-                  <div>
-                    <label className="block font-semibold mb-1">تاريخ الفتح المتوقع *</label>
-                    <Input type="date" value={expectedDate} onChange={(e) => setExpectedDate(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="block font-semibold mb-1">تاريخ الفتح *</label>
-                    <Input type="date" value={minutesOpeningDate} onChange={(e) => setMinutesOpeningDate(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="block font-semibold mb-1">تاريخ المحضر *</label>
-                    <Input type="date" value={minutesDate} onChange={(e) => setMinutesDate(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="block font-semibold mb-1">تاريخ التسليم *</label>
-                    <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="block font-semibold mb-1">تاريخ إدخال النظام</label>
-                    <Input type="date" value={entryDate} disabled className="bg-slate-200 font-mono" />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border">
+                  <div><label className="block font-semibold mb-1">تاريخ آخر محضر مدخل</label><Input type="date" value={lastMinuteDate} disabled className="bg-slate-200 font-mono" /></div>
+                  <div><label className="block font-semibold mb-1">تاريخ آخر فتح للصندوق</label><Input type="date" value={lastOpeningDate} disabled className="bg-slate-200 font-mono" /></div>
+                  <div><label className="block font-semibold mb-1">التاريخ المتوقع للفتح (أسبوعياً)</label><Input type="date" value={expectedDate} disabled className="bg-slate-200 font-mono" /></div>
+                  <div><label className="block font-semibold mb-1">تاريخ استلام المحضر *</label><Input type="date" value={minutesDate} onChange={(e) => setMinutesDate(e.target.value)} className="bg-white" /></div>
+                  <div><label className="block font-semibold mb-1">التاريخ المتوقع لتسليم المحضر</label><Input type="date" value={deliveryDate} disabled className="bg-slate-200 font-mono" /></div>
+                  <div><label className="block font-semibold mb-1">تاريخ إدخال المحضر</label><Input type="date" value={entryDate} disabled className="bg-slate-200 font-mono" /></div>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-slate-900 text-white rounded-xl font-bold">
