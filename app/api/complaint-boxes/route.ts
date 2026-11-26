@@ -62,8 +62,9 @@ export async function POST(request: Request) {
   if (!project[0] || project[0].projectName !== projectName) return NextResponse.json({ error: "المشروع غير موجود في قاعدة المشاريع المرجعية أو أن اسمه لا يطابق رقمه." }, { status: 422 })
 
   const files = form.getAll("images").filter((value): value is File => value instanceof File && value.size > 0)
-  if (files.length > 10 || files.some(file => !file.type.startsWith("image/") || file.size > 8 * 1024 * 1024)) {
-    return NextResponse.json({ error: "يسمح بإرفاق 10 صور كحد أقصى، على ألا يتجاوز حجم الصورة 8 ميجابايت." }, { status: 422 })
+  const totalBytes = files.reduce((sum, file) => sum + file.size, 0)
+  if (files.length > 10 || files.some(file => !file.type.startsWith("image/") || file.size > 3 * 1024 * 1024) || totalBytes > 4 * 1024 * 1024) {
+    return NextResponse.json({ error: "يسمح بإرفاق 10 صور كحد أقصى، بحد إجمالي 4 ميجابايت للطلب." }, { status: 422 })
   }
   try {
     const box = await prisma.fieldBox.create({
