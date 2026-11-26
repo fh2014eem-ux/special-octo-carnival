@@ -6,9 +6,9 @@ import { prisma } from "@/lib/prisma"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024
-const MAX_REPORT_BYTES = 12 * 1024 * 1024
-const MAX_TOTAL_BYTES = 24 * 1024 * 1024
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024
+const MAX_REPORT_BYTES = 3 * 1024 * 1024
+const MAX_TOTAL_BYTES = 4 * 1024 * 1024
 
 function getScope(user: { role?: string; branch?: string }) {
   const isAdmin = user.role === "مدير النظام" || user.role === "إدارة عامة" || user.branch === "الإدارة العامة"
