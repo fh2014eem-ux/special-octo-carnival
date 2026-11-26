@@ -74,7 +74,6 @@ export async function POST(request: Request) {
     WHERE active = true AND project_number = ${projectNumber}
     LIMIT 1
   `
-  const scope = getScope(session.user)
   const referenceBranch = scope.branch === "فرع المكلا" ? "فرع حضرموت" : scope.branch
   if (!project[0] || project[0].projectName !== projectName || (!scope.isAdmin && project[0].branch && project[0].branch !== referenceBranch)) {
     return NextResponse.json({ error: "المشروع المحدد غير موجود في المرجع المعتمد أو لا يطابق رقمه." }, { status: 422 })
@@ -85,15 +84,15 @@ export async function POST(request: Request) {
   const reportFile = reportValue instanceof File && reportValue.size > 0 ? reportValue : null
   if (imageFiles.length > 10) return NextResponse.json({ error: "الحد الأقصى 10 صور للزيارة." }, { status: 422 })
   if (imageFiles.some(file => !file.type.startsWith("image/") || file.size > MAX_IMAGE_BYTES)) {
-    return NextResponse.json({ error: "يسمح بصور لا يتجاوز حجم كل منها 8 ميجابايت." }, { status: 422 })
+    return NextResponse.json({ error: "يسمح بصور لا يتجاوز حجم كل منها 3 ميجابايت." }, { status: 422 })
   }
   const allowedReport = new Set(["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"])
   if (reportFile && (!allowedReport.has(reportFile.type) || reportFile.size > MAX_REPORT_BYTES)) {
-    return NextResponse.json({ error: "التقرير يجب أن يكون PDF أو Word أو Excel وألا يتجاوز 12 ميجابايت." }, { status: 422 })
+    return NextResponse.json({ error: "التقرير يجب أن يكون PDF أو Word أو Excel وألا يتجاوز 3 ميجابايت." }, { status: 422 })
   }
   const files = [...imageFiles, ...(reportFile ? [reportFile] : [])]
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0)
-  if (totalBytes > MAX_TOTAL_BYTES) return NextResponse.json({ error: "إجمالي حجم المرفقات يجب ألا يتجاوز 24 ميجابايت." }, { status: 422 })
+  if (totalBytes > MAX_TOTAL_BYTES) return NextResponse.json({ error: "إجمالي حجم المرفقات يجب ألا يتجاوز 4 ميجابايت." }, { status: 422 })
 
   try {
     const visit = await prisma.fieldMonitoringVisit.create({
