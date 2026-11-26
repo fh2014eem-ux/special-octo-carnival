@@ -69,53 +69,7 @@ export default function ReportsAndSyncPage() {
       <input type="file" ref={locInputRef} accept=".xlsx, .xls, .csv" onChange={(e) => handleFileUpload(e, "locations")} className="hidden" />
       <input type="file" ref={catInputRef} accept=".xlsx, .xls, .csv" onChange={(e) => handleFileUpload(e, "categories")} className="hidden" />
 
-      {/* 1️⃣ قسم تحديث قواعد البيانات عبر الأكسل */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border bg-white shadow-sm">
-          <CardHeader className="bg-slate-50 border-b py-3">
-            <CardTitle className="text-xs font-bold text-blue-950">📁 قاعدة بيانات المشاريع</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3 text-xs">
-            <p className="text-slate-500">تحديث ملف المشاريع لتظهر في كافة محاور النظام (العمليات، الميدانية، والشكاوى).</p>
-            <Button 
-              onClick={() => projInputRef.current?.click()} 
-              className="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs"
-            >
-              {loading === "projects" ? "جاري التحديث..." : "📁 رفع ملف المشاريع جديد"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border bg-white shadow-sm">
-          <CardHeader className="bg-slate-50 border-b py-3">
-            <CardTitle className="text-xs font-bold text-blue-950">📍 قاعدة بيانات المواقع</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3 text-xs">
-            <p className="text-slate-500">تحديث ملف المواقع (المحافظات، المديريات، العزل، القرى/الأحياء).</p>
-            <Button 
-              onClick={() => locInputRef.current?.click()} 
-              className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs"
-            >
-              {loading === "locations" ? "جاري التحديث..." : "📍 رفع ملف المواقع جديد"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border bg-white shadow-sm">
-          <CardHeader className="bg-slate-50 border-b py-3">
-            <CardTitle className="text-xs font-bold text-blue-950">🏷️ قاعدة بيانات التصنيفات</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3 text-xs">
-            <p className="text-slate-500">تحديث التصنيفات الرئيسية والفرعية لمستويات الشكاوى والعمليات.</p>
-            <Button 
-              onClick={() => catInputRef.current?.click()} 
-              className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs"
-            >
-              {loading === "categories" ? "جاري التحديث..." : "🏷️ رفع ملف التصنيفات جديد"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      {/* تم نقل أدوات تحديث المراجع خارج صفحة الإحصائيات؛ تبقى واجهات API والبيانات المرجعية دون حذف. */}
 
       {/* 2️⃣ قسم استخراج وتنزيل التقارير الأكسل والـ Word / PDF */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
