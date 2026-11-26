@@ -295,7 +295,7 @@ export default function NewOperationPage() {
       <div className="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center border-l-4 border-l-blue-900">
         <div>
           <h1 className="text-lg font-bold text-slate-900">إدارة العمليات — إدخال عملية جديدة</h1>
-          <p className="text-xs text-slate-500 mt-1">فرع تعز - قواعد الضبط المتسلسلة والربط التلقائي بمحاضر الفتح</p>
+          <p className="text-xs text-slate-500 mt-1">الفرع والصلاحيات مرتبطان بحساب المستخدم — قواعد الضبط والربط التلقائي بمحاضر الفتح</p>
         </div>
         <div className="flex gap-2 text-xs font-bold">
           <span className={`px-3 py-1 rounded-lg ${step === 1 ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-600'}`}>1. البيانات الأساسية</span>
