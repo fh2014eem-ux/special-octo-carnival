@@ -24,7 +24,7 @@ export default function ReportsAndSyncPage() {
       <div className="bg-white p-6 rounded-2xl shadow-sm border flex justify-between items-center border-l-4 border-l-blue-900">
         <div>
           <h1 className="text-xl font-black text-slate-900">محور الإحصائيات، التقارير وتحديث قاعدة البيانات</h1>
-          <p className="text-xs text-slate-500 mt-1">إدارة وتحديث قواعد البيانات المركزية (المشاريع، المواقع، التصنيفات)</p>
+          <p className="text-xs text-slate-500 mt-1">استعراض الإحصائيات ومخرجات التقارير التشغيلية</p>
         </div>
       </div>
 
