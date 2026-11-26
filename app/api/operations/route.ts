@@ -97,7 +97,8 @@ export async function POST(request: Request) {
       WHERE active = true AND project_number = ${projectNumber} LIMIT 1
     `
     const isAdmin = session.user.role === "مدير النظام" || session.user.role === "إدارة عامة" || branch === "الإدارة العامة"
-    if (!project[0] || (projectName && project[0].projectName !== projectName) || (!isAdmin && project[0].branch && project[0].branch !== branch)) {
+    const referenceBranch = branch === "فرع المكلا" ? "فرع حضرموت" : branch
+    if (!project[0] || (projectName && project[0].projectName !== projectName) || (!isAdmin && project[0].branch && project[0].branch !== referenceBranch)) {
       return NextResponse.json({ error: "المشروع المحدد غير موجود في المرجع المعتمد أو أن اسمه لا يطابق رقمه." }, { status: 422 })
     }
   }
