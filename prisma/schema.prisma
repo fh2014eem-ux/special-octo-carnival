@@ -71,6 +71,7 @@ model ComplaintOperation {
   
   // ربط صندوق الشكاوى ومحضر الفتح إن وجدت
   boxMinuteId       String?
+  minutesNo         String?
   
   // الإحالة والمعالجة
   assignedTo        String?   // اسم المسؤول كما في السجلات القديمة
@@ -84,7 +85,8 @@ model ComplaintOperation {
   dueDate           DateTime? // تاريخ الاستحقاق
   
   // الرد النهائي والإغلاق
-  finalResponse     String?   // نص الرد النهائي
+  finalResponse     String?   // نص الإجراء النهائي
+  responseMessage   String?   // نص الرسالة المرسلة لصاحب العملية
   responseChannels  String?   // قنوات إرسال الرد
   finalEvaluation   String?   // التقييم النهائي (محقة، غير محقة، كيدية، إلخ)
   needsAnalysis     String?   // نعم / لا
