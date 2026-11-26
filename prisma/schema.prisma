@@ -55,6 +55,7 @@ model ComplaintOperation {
   // الموضوع والتفاصيل
   subject           String
   description       String
+  additionalData    String?
   attachmentUrl     String?
   
   // التصنيف والحساسية (للشكاوى والبلاغات)
@@ -114,6 +115,42 @@ model FieldAwareness {
   status            String   // مسودة، مرفق، معتمد، مؤرشف
   branch            String
   createdAt         DateTime @default(now())
+}
+
+// سجل المتابعة الميدانية والرقابة
+model FieldMonitoringVisit {
+  id             String   @id @default(uuid())
+  projectNumber  String
+  projectName    String
+  visitStartDate DateTime
+  visitEndDate   DateTime
+  location       String?
+  team           String
+  goal           String
+  result         String
+  branch         String
+  createdById    String
+  createdByName  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  attachments    FieldMonitoringAttachment[]
+
+  @@index([branch, createdAt])
+  @@index([projectNumber])
+}
+
+// ملفات صور وتقارير المتابعة محفوظة كبايتات في قاعدة البيانات مع بياناتها الوصفية
+model FieldMonitoringAttachment {
+  id          String               @id @default(uuid())
+  visitId     String
+  visit       FieldMonitoringVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  fileName    String
+  mimeType    String
+  fileSize    Int
+  fileContent Bytes
+  createdAt   DateTime             @default(now())
+
+  @@index([visitId])
 }
 
 // صناديق الشكاوى الميدانية
