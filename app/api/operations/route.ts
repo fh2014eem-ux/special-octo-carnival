@@ -12,6 +12,15 @@ function scopeFor(user: { role?: string; branch?: string }) {
 }
 
 function toClientOperation(row: any) {
+  let replyChannels: string[] = []
+  if (row.responseChannels) {
+    try {
+      const parsed = JSON.parse(row.responseChannels)
+      replyChannels = Array.isArray(parsed) ? parsed.map(String) : [String(row.responseChannels)]
+    } catch {
+      replyChannels = [String(row.responseChannels)]
+    }
+  }
   return {
     id: row.id,
     operationNo: row.operationNumber,
@@ -19,6 +28,14 @@ function toClientOperation(row: any) {
     status: row.status,
     branch: row.branch,
     channel: row.channel,
+    minutesNo: row.minutesNo || row.boxMinuteId || "",
+    officerReply: row.internalNotes || "",
+    responder: row.assignedTo || "",
+    closure: row.finalResponse || "",
+    replyChannels,
+    message: row.responseMessage || "",
+    evaluation: row.finalEvaluation || "",
+    needsAnalysis: row.needsAnalysis || "",
     phone: row.phone,
     altPhone: row.secondaryPhone || "",
     email: row.citizenEmail || "",
@@ -138,6 +155,8 @@ export async function POST(request: Request) {
         subject,
         description,
         additionalData: additionalData || null,
+        minutesNo: value("minutesNo") || null,
+        responseMessage: value("replyMessage") || null,
         sensitivity: value("sensitivity") || null,
         primaryCategory: value("mainClass") || null,
         subCategory: value("subClass") || null,
