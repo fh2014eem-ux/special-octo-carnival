@@ -1,47 +1,11 @@
 "use client"
 
-import React, { useRef, useState } from "react"
+import React from "react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 export default function ReportsAndSyncPage() {
-  const [loading, setLoading] = useState<string | null>(null)
-
-  // المراجع البرمجية لربط الأزرار بحقول رفع الملفات الحقيقية
-  const projInputRef = useRef<HTMLInputElement>(null)
-  const locInputRef = useRef<HTMLInputElement>(null)
-  const catInputRef = useRef<HTMLInputElement>(null)
-
-  // دالة معالجة رفع الملفات عند اختيار الملف من الجهاز
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, dataType: string) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setLoading(dataType)
-    toast.info(`جاري رفع وتحديث قاعدة بيانات ${dataType}...`)
-
-    const formData = new FormData()
-    formData.append("file", file)
-    formData.append("type", dataType)
-
-    try {
-      const res = await fetch("/api/upload-excel", { method: "POST", body: formData })
-      const result = await res.json()
-
-      if (res.ok && result.success) {
-        localStorage.setItem(`global_system_${dataType}`, JSON.stringify(result.data))
-        toast.success(`تم تحديث (${result.count}) سجل بنجاح في كافة محاور النظام!`)
-      } else {
-        toast.error(result.message || "حدث خطأ أثناء قراءة الملف.")
-      }
-    } catch (err) {
-      toast.error("فشل الاتصال برابط الرفع.")
-    } finally {
-      setLoading(null)
-    }
-  }
-
   // تصدير واستخراج شيتات الأكسل والمستندات
   const handleExportExcel = (type: string) => {
     toast.success(`جاري استخراج وتنزيل تقارير ${type} بصيغة Excel...`)
@@ -64,60 +28,7 @@ export default function ReportsAndSyncPage() {
         </div>
       </div>
 
-      {/* عناصر الرفع الخفية للتفاعل مع الأزرار */}
-      <input type="file" ref={projInputRef} accept=".xlsx, .xls, .csv" onChange={(e) => handleFileUpload(e, "projects")} className="hidden" />
-      <input type="file" ref={locInputRef} accept=".xlsx, .xls, .csv" onChange={(e) => handleFileUpload(e, "locations")} className="hidden" />
-      <input type="file" ref={catInputRef} accept=".xlsx, .xls, .csv" onChange={(e) => handleFileUpload(e, "categories")} className="hidden" />
-
-      {/* 1️⃣ قسم تحديث قواعد البيانات عبر الأكسل */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border bg-white shadow-sm">
-          <CardHeader className="bg-slate-50 border-b py-3">
-            <CardTitle className="text-xs font-bold text-blue-950">📁 قاعدة بيانات المشاريع</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3 text-xs">
-            <p className="text-slate-500">تحديث ملف المشاريع لتظهر في كافة محاور النظام (العمليات، الميدانية، والشكاوى).</p>
-            <Button 
-              onClick={() => projInputRef.current?.click()} 
-              className="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs"
-            >
-              {loading === "projects" ? "جاري التحديث..." : "📁 رفع ملف المشاريع جديد"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border bg-white shadow-sm">
-          <CardHeader className="bg-slate-50 border-b py-3">
-            <CardTitle className="text-xs font-bold text-blue-950">📍 قاعدة بيانات المواقع</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3 text-xs">
-            <p className="text-slate-500">تحديث ملف المواقع (المحافظات، المديريات، العزل، القرى/الأحياء).</p>
-            <Button 
-              onClick={() => locInputRef.current?.click()} 
-              className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs"
-            >
-              {loading === "locations" ? "جاري التحديث..." : "📍 رفع ملف المواقع جديد"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border bg-white shadow-sm">
-          <CardHeader className="bg-slate-50 border-b py-3">
-            <CardTitle className="text-xs font-bold text-blue-950">🏷️ قاعدة بيانات التصنيفات</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-3 text-xs">
-            <p className="text-slate-500">تحديث التصنيفات الرئيسية والفرعية لمستويات الشكاوى والعمليات.</p>
-            <Button 
-              onClick={() => catInputRef.current?.click()} 
-              className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs"
-            >
-              {loading === "categories" ? "جاري التحديث..." : "🏷️ رفع ملف التصنيفات جديد"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 2️⃣ قسم استخراج وتنزيل التقارير الأكسل والـ Word / PDF */}
+      {/* قسم استخراج وتنزيل التقارير الأكسل والـ Word / PDF */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* أزرار تنزيل تقارير الأكسل */}
         <Card className="border bg-white shadow-sm">
