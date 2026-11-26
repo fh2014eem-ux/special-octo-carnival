@@ -27,18 +27,16 @@ export default function OperationsPage() {
   // تنزيل إكسل مخصص حسب الحالة أو النوع الحالي
   const handleExportFilteredExcel = () => {
     const headers = ["رقم العملية", "نوع العملية", "الحالة", "اسم الشاكي", "الهاتف", "المحافظة", "الموضوع", "تاريخ الإضافة"]
-    const rows = filteredOps.length > 0 ? filteredOps.map(o => [
-      o.id || "OP-2026-001",
+    const rows = filteredOps.map(o => [
+      o.operationNo || o.id,
       o.type,
       o.status,
-      `"${o.name}"`,
-      o.phone,
-      o.province,
-      `"${o.subject}"`,
-      "2026/10/25"
-    ]) : [
-      ["OP-2026-001", typeFilter !== "الكل" ? typeFilter : "شكوى", statusFilter !== "الكل" ? statusFilter : "مغلقة", "فهيم السامعي", "777828051", "تعز", "موضوع تجريبي", "2026/10/25"]
-    ]
+      `"${String(o.name || "").replace(/"/g, '""')}"`,
+      o.phone || "",
+      o.province || "",
+      `"${String(o.subject || "").replace(/"/g, '""')}"`,
+      o.createdAt ? new Date(o.createdAt).toLocaleString("ar-YE") : ""
+    ])
 
     const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
       + [headers.join(","), ...rows.map(e => e.join(","))].join("\n")
