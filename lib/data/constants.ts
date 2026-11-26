@@ -90,6 +90,11 @@ export const BRANCHES: Record<string, Branch> = {
     name: "فرع المكلا",
     provinces: ["حضرموت", "شبوة", "المهرة", "سقطرى"],
   },
+  Sanaa: { key: "Sanaa", name: "فرع صنعاء", provinces: ["أمانة العاصمة", "صنعاء"] },
+  Amran: { key: "Amran", name: "فرع عمران", provinces: ["عمران"], fixedProvince: "عمران" },
+  Hajjah: { key: "Hajjah", name: "فرع حجة", provinces: ["حجة"], fixedProvince: "حجة" },
+  Hodeidah: { key: "Hodeidah", name: "فرع الحديدة", provinces: ["الحديدة"], fixedProvince: "الحديدة" },
+  Ibb: { key: "Ibb", name: "فرع إب", provinces: ["إب"], fixedProvince: "إب" },
   Marib: { key: "Marib", name: "مكتب مأرب", provinces: ["مأرب"], fixedProvince: "مأرب" },
   General: { key: "General", name: "الإدارة العامة", provinces: ["تعز", "عدن", "حضرموت", "مأرب"] },
 }
