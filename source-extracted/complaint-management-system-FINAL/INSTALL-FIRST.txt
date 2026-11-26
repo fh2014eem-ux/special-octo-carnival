@@ -1,0 +1,10 @@
+هذه نسخة المصدر النهائية بعد الإصلاحات.
+
+على Windows داخل Visual Studio Code:
+1) npm install
+2) npm run db:generate
+3) انسخ .env.example إلى .env.local وأدخل بيانات قاعدة البيانات وBETTER_AUTH_SECRET
+4) npm run typecheck
+5) npm run dev
+
+لا تقم بنسخ ملفات .env من جهاز آخر إلى هذه النسخة قبل مراجعة القيم.

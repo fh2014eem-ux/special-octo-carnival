@@ -1,0 +1,91 @@
+name: Extract CHM source checkpoint
+
+on:
+  push:
+    branches:
+      - chm-source-extracted
+    paths:
+      - CHM-working-checkpoint-2026-11-14-repair-pass1.zip
+      - .github/workflows/extract-chm-source.yml
+
+permissions:
+  contents: write
+
+jobs:
+  extract-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout isolated extraction branch
+        uses: actions/checkout@v4
+        with:
+          ref: chm-source-extracted
+          fetch-depth: 1
+
+      - name: Extract only the approved FINAL source folder
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import PurePosixPath
+          from zipfile import ZipFile
+          from pathlib import Path
+          import shutil
+
+          archive = Path("CHM-working-checkpoint-2026-11-14-repair-pass1.zip")
+          destination = Path("source-extracted/complaint-management-system-FINAL")
+          if not archive.is_file():
+              raise SystemExit("Checkpoint ZIP is missing")
+
+          with ZipFile(archive) as zf:
+              names = zf.namelist()
+              candidates = set()
+              for name in names:
+                  p = PurePosixPath(name)
+                  parts = p.parts
+                  for i, part in enumerate(parts):
+                      if part == "complaint-management-system-FINAL":
+                          candidates.add("/".join(parts[:i+1]) + "/")
+              if len(candidates) != 1:
+                  raise SystemExit(f"Expected exactly one FINAL source folder; found: {sorted(candidates)}")
+              prefix = next(iter(candidates))
+              selected = [n for n in names if n.startswith(prefix) and not n.endswith("/")]
+              if not selected:
+                  raise SystemExit("FINAL source folder is empty")
+
+              if destination.exists():
+                  shutil.rmtree(destination)
+              destination.mkdir(parents=True)
+
+              count = 0
+              for name in selected:
+                  relative = name[len(prefix):]
+                  if not relative:
+                      continue
+                  p = PurePosixPath(relative)
+                  if p.is_absolute() or ".." in p.parts:
+                      raise SystemExit(f"Unsafe archive path: {name}")
+                  if any(part in {".git", "node_modules", ".next", "dist", "build"} for part in p.parts):
+                      continue
+                  if p.name == ".env" or (p.name.startswith(".env.") and p.name not in {".env.example", ".env.template"}):
+                      continue
+                  target = destination.joinpath(*p.parts)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(zf.read(name))
+                  count += 1
+
+          if count < 10:
+              raise SystemExit(f"Extraction yielded too few source files: {count}")
+          print(f"Extracted {count} files into {destination}")
+          PY
+
+      - name: Commit extracted source without touching existing root files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add source-extracted/
+          if git diff --cached --quiet; then
+            echo "No extracted source changes."
+          else
+            git commit -m "chore: extract approved CHM FINAL checkpoint source"
+            git push origin HEAD:chm-source-extracted
+          fi

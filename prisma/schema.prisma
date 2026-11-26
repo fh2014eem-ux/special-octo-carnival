@@ -1,0 +1,185 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("PRISMA_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// جدول المستخدمين والفروع والأدوار
+model User {
+  id                 String               @id
+  username           String               @unique
+  displayUsername    String?
+  name               String
+  email              String               @unique
+  emailVerified      Boolean              @default(false)
+  image              String?
+  active             Boolean              @default(true)
+  role               String               @default("مدخل بيانات")
+  branch             String               @default("الإدارة العامة")
+  assignedOperations ComplaintOperation[] @relation("AssignedOperations")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@map("user")
+}
+
+// جدول العمليات الرئيسي (شكوى، بلاغ، طلب، استعلام، مقترح، إطراء)
+model ComplaintOperation {
+  id                String    @id @default(uuid())
+  operationNumber   String    @unique // مثال: CHM-2026-000101
+  type              String    @default("شكوى") // شكوى، بلاغ، طلب، استعلام، مقترح، إطراء
+  status            String    @default("NEW") // NEW, IN_PROGRESS, RESOLVED, CLOSED, REJECTED
+  priority          String    @default("MEDIUM")
+  channel           String    @default("WEB") // قناة الاستلام (صندوق الشكاوى، مركز الاتصال، إلخ)
+  
+  // بيانات مقدم العملية
+  applicantName     String
+  gender            String    @default("") // ذكر، انثى
+  phone             String    @default("")
+  secondaryPhone    String?
+  citizenEmail      String?
+  location          String?
+  applicantRole     String?   // مستفيد، مقاول، مورد، إلخ
+  defendant         String?   // الشخص المشتكى عليه / المعني بالإطراء
+  
+  // الموقع الجغرافي المتسلسل
+  governorate       String?
+  directorate       String?
+  subDistrict       String?
+  villageOrNeighborhood String?
+  
+  // الموضوع والتفاصيل
+  subject           String
+  description       String
+  attachmentUrl     String?
+  
+  // التصنيف والحساسية (للشكاوى والبلاغات)
+  sensitivity       String?   // حساسية منخفضة، عالية الحساسية
+  primaryCategory   String?   // التصنيف الرئيسي
+  subCategory       String?   // التصنيف الفرعي
+  secondSubCategory String?   // التصنيف الفرعي الثاني
+  
+  // ربط المشروع
+  projectNumber     String?
+  projectName       String?
+  
+  // ربط صندوق الشكاوى ومحضر الفتح إن وجدت
+  boxMinuteId       String?
+  
+  // الإحالة والمعالجة
+  assignedTo        String?   // اسم المسؤول كما في السجلات القديمة
+  assignedToId      String?
+  assignedUser      User?     @relation("AssignedOperations", fields: [assignedToId], references: [id], onDelete: SetNull)
+  internalNotes     String?   // الرد الداخلي أو ملاحظات الإحالة
+  dueDate           DateTime? // تاريخ الاستحقاق
+  
+  // الرد النهائي والإغلاق
+  finalResponse     String?   // نص الرد النهائي
+  responseChannels  String?   // قنوات إرسال الرد
+  finalEvaluation   String?   // التقييم النهائي (محقة، غير محقة، كيدية، إلخ)
+  needsAnalysis     String?   // نعم / لا
+  closedAt          DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// الإدارة الميدانية (التوعية الأساسية والتكرارية)
+model FieldAwareness {
+  id                String   @id @default(uuid())
+  projectNumber     String
+  projectName       String
+  sector            String
+  governorate       String
+  directorate       String
+  awarenessType     String   // توعية أساسية، تكرار التوعية
+  projectCategory   String   // مشاريع ميدانية، مشاريع تدريبية، أخرى
+  activityDate      String
+  location          String
+  targetAudience    String
+  activityGoal      String
+  topic             String
+  duration          String
+  totalBeneficiaries Int
+  menCount          Int
+  womenCount        Int
+  directBeneficiaries Int
+  indirectBeneficiaries Int
+  description       String
+  attachments       String?
+  status            String   // مسودة، مرفق، معتمد، مؤرشف
+  branch            String
+  createdAt         DateTime @default(now())
+}
+
+// صناديق الشكاوى الميدانية
+model FieldBox {
+  id              String   @id @default(uuid())
+  boxNumber       String   @unique
+  projectNumber   String
+  projectName     String
+  installLocation String
+  installDate     String
+  reasonForPlace  String
+  chosenBy        String
+  branch          String
+  createdAt       DateTime @default(now())
+}
+
+// محاضر فتح صناديق الشكاوى
+model BoxOpeningMinute {
+  id                String   @id @default(uuid())
+  minuteNumber      String   @unique
+  boxNumber         String
+  projectNumber     String
+  projectName       String
+  openingDate       String
+  expectedDate      String
+  deliveryDate      String
+  entryDate         String
+  openingCommittee  String
+  branch            String
+  
+  totalOperations   Int      // إجمالي العمليات
+  complaintsCount   Int      // شكاوى
+  reportsCount      Int      // بلاغات
+  requestsCount     Int      // طلبات
+  proposalsCount    Int      // مقترحات
+  inquiriesCount    Int      // استعلامات
+  praisesCount      Int      // إطراءات
+  
+  acceptedAttachments Int
+  rejectedAttachments Int
+  rejectionReasons    String?
+  minuteAttachment    String?
+  createdAt         DateTime @default(now())
+}
+
+// إدارة المخزون
+model InventoryItem {
+  id            String   @id @default(uuid())
+  itemName      String   // ملصقات توعوية، بروشورات، دفاتر محاضر، صناديق شكاوى
+  suppliedQty   Int      // الكمية الموردة
+  dispensedQty  Int      // الكمية المصروفة
+  usedQty       Int      // الكمية المستخدمة
+  remainingQty  Int      // الرصيد المتبقي
+  projectTarget String?  // المشروع المستفيد
+  movementDate  String
+  userName      String
+  branch        String
+  createdAt     DateTime @default(now())
+}
+
+// سجل المتابعة والمساءلة
+model AuditLog {
+  id          String   @id @default(uuid())
+  operationId String
+  action      String   // إنشاء، تعديل، إحالة، رد، إغلاق
+  performedBy String
+  timestamp   DateTime @default(now())
+  details     String?
+}

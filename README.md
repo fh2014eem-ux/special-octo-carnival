@@ -11,8 +11,8 @@
 - **تسجيل شكوى جديدة** مع التحقق من المدخلات على الخادم.
 - **التقارير**: توزيع الشكاوى حسب الحالة والأولوية والفئة.
 - **مسارات API حقيقية** بدل البيانات الوهمية.
-- **تشغيل دون قاعدة بيانات**: عند غياب `DATABASE_URL` يعمل التطبيق تلقائياً على
-  مخزن بيانات في الذاكرة ببيانات تجريبية، بحيث تظل الواجهات قابلة للتشغيل والتجربة.
+- **وضع التطوير**: يمكن استخدام مخزن الذاكرة للتجربة المحلية فقط.
+- **وضع الإنتاج**: يتطلب `DATABASE_URL`؛ إذا لم تكن قاعدة البيانات مضبوطة، ترفض واجهات API التشغيل بدلاً من حفظ بيانات مؤقتة قد تضيع.
 
 ## المتطلبات
 
@@ -53,10 +53,12 @@ cp .env.example .env
 
 ```env
 # Neon DB
-DATABASE_URL="postgresql://user:password@ep-xxx.aws.neon.tech/dbname?sslmode=require"
+DATABASE_URL="postgresql://user:password@ep-xxx-pooler.aws.neon.tech/dbname?sslmode=require"
+PRISMA_DATABASE_URL="postgresql://user:password@ep-xxx.aws.neon.tech/dbname?sslmode=require"
 
 # أو Supabase
 DATABASE_URL="postgresql://postgres:password@db.xxxxx.supabase.co:5432/postgres"
+PRISMA_DATABASE_URL="postgresql://postgres:password@db.xxxxx.supabase.co:5432/postgres"
 
 # أو PostgreSQL محلي
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/complaints?schema=public"
@@ -68,11 +70,11 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/complaints?schema=pu
 # توليد Prisma Client
 npm run db:generate
 
-# إنشاء الجداول في قاعدة البيانات وتسجيل أول migration
+# إنشاء migration بعد مراجعة schema
 npm run db:migrate
 
-# (اختياري) بذر بيانات تجريبية
-npm run db:seed
+# في بيئة الإنتاج: تطبيق migrations التي تم إنشاؤها واعتمادها مسبقاً
+npm run db:deploy
 ```
 
 بدائل مفيدة:
@@ -85,8 +87,9 @@ npm run db:push
 npm run db:studio
 ```
 
-بمجرد ضبط `DATABASE_URL` بشكل صحيح، ينتقل التطبيق تلقائياً من مخزن الذاكرة إلى
-قاعدة البيانات الحقيقية دون أي تغيير في الكود.
+في وضع التطوير يمكن استخدام مخزن الذاكرة عند غياب قاعدة البيانات. أما في Production
+فلا يسمح التطبيق بالرجوع الصامت إلى الذاكرة؛ يجب ضبط `DATABASE_URL` ومراجعة
+`PRISMA_DATABASE_URL` قبل تشغيل migrations.
 
 ### السكربتات المتاحة
 
@@ -96,8 +99,9 @@ npm run db:studio
 | `npm run build` | بناء نسخة الإنتاج |
 | `npm run start` | تشغيل نسخة الإنتاج |
 | `npm run db:generate` | توليد Prisma Client |
-| `npm run db:migrate` | إنشاء/تطبيق migrations (تطوير) |
-| `npm run db:deploy` | تطبيق migrations (إنتاج) |
+| `npm run db:migrate` | إنشاء migration وتطبيقها في التطوير |
+| `npm run db:deploy` | تطبيق migrations المعتمدة في الإنتاج |
+| `npm run db:status` | التحقق من حالة migrations |
 | `npm run db:push` | مزامنة المخطط دون migrations |
 | `npm run db:seed` | بذر بيانات تجريبية |
 | `npm run db:studio` | فتح Prisma Studio |
@@ -225,3 +229,10 @@ prisma/
 - **User** (المستخدمون): `ADMIN` / `AGENT` / `CITIZEN`.
 - **Complaint** (الشكاوى): رقم مرجعي، عنوان، وصف، فئة، حالة، أولوية، بيانات مقدم الشكوى، موظف مسؤول.
 - **Report** (التقارير): نوع التقرير، الفترة الزمنية، وملخص إحصائي.
+
+
+## متطلبات التكامل الإضافية (نسخة 6 نوفمبر 2026)
+
+راجع `docs/REQUIREMENTS-AND-INTEGRATION-AR.md` لمعرفة القائمة الرئيسية المعتمدة، وإدارة المستخدمين والصلاحيات وسجلات التدقيق، وربط العمليات بمراجع المشاريع والمواقع والتصنيفات، وآلية المزامنة المستمرة، والتنبيهات والمخزون.
+
+**تنبيه:** الملف الحالي يتضمن شاشة أولية للتنبيهات وبعض واجهات العرض التجريبية. لا تعتبر مزامنة Google Drive أو إدارة المستخدمين المركزية أو جميع حركات المخزون والمتابعة مكتملة قبل تنفيذ عناصر التكامل والتحقق الواردة في الوثيقة. لا تشغّل `db:push` على قاعدة بيانات إنتاجية قبل توحيد مخططي Prisma وDrizzle ومراجعة الترحيل.

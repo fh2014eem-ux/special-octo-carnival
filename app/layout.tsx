@@ -1,16 +1,29 @@
 import type { Metadata } from "next"
-import type { ReactNode } from "react"
+import { Cairo } from "next/font/google"
+import { Toaster } from "sonner"
+import { StoreProvider } from "@/lib/store"
 import "./globals.css"
 
+const cairo = Cairo({ subsets: ["arabic"] })
+
 export const metadata: Metadata = {
-  title: "نظام إدارة الشكاوى",
-  description: "منصة موحدة لاستقبال الشكاوى ومعالجتها ومتابعتها",
+  title: "نظام الشكاوى والبلاغات - الصندوق الاجتماعي للتنمية",
+  description: "نظام إدارة ومتابعة الشكاوى والبلاغات",
 }
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="ar" dir="rtl">
-      <body>{children}</body>
+      <body className={cairo.className}>
+        <StoreProvider>
+          {children}
+        </StoreProvider>
+        <Toaster position="top-center" richColors />
+      </body>
     </html>
   )
 }
