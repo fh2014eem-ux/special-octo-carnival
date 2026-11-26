@@ -13,6 +13,7 @@ export async function GET() {
   }
   const isAdmin = session.user.role === "مدير النظام" || session.user.role === "إدارة عامة" || session.user.branch === "الإدارة العامة"
   const branch = session.user.branch || ""
+  const referenceBranch = branch === "فرع المكلا" ? "فرع حضرموت" : branch
 
   try {
     const projects = isAdmin
@@ -25,7 +26,7 @@ export async function GET() {
       : await prisma.$queryRaw<Array<{ projectNumber: string; projectName: string; branch: string; data: unknown }>>`
           SELECT project_number AS "projectNumber", project_name AS "projectName", branch, data
           FROM public.chm_reference_projects
-          WHERE active = true AND branch = ${branch}
+          WHERE active = true AND branch = ${referenceBranch}
           ORDER BY project_number
         `
     return NextResponse.json({ projects, count: projects.length })
