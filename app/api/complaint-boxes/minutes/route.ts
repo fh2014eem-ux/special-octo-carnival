@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         minuteNumber, boxNumber, projectNumber, projectName,
         openingDate: today, expectedDate, deliveryDate, entryDate: today, minutesDate,
         openingCommittee: session.user.name || "لجنة فتح الصندوق",
-        branch,
+        branch: box.branch,
         totalDocuments,
         delayStatus,
         totalOperations: distributed,
