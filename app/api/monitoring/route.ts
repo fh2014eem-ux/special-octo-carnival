@@ -75,7 +75,8 @@ export async function POST(request: Request) {
     LIMIT 1
   `
   const scope = getScope(session.user)
-  if (!project[0] || project[0].projectName !== projectName || (!scope.isAdmin && project[0].branch && project[0].branch !== scope.branch)) {
+  const referenceBranch = scope.branch === "فرع المكلا" ? "فرع حضرموت" : scope.branch
+  if (!project[0] || project[0].projectName !== projectName || (!scope.isAdmin && project[0].branch && project[0].branch !== referenceBranch)) {
     return NextResponse.json({ error: "المشروع المحدد غير موجود في المرجع المعتمد أو لا يطابق رقمه." }, { status: 422 })
   }
 
