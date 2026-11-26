@@ -21,6 +21,7 @@ model User {
   role               String               @default("مدخل بيانات")
   branch             String               @default("الإدارة العامة")
   assignedOperations ComplaintOperation[] @relation("AssignedOperations")
+  createdOperations  ComplaintOperation[] @relation("CreatedOperations")
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 
@@ -75,6 +76,10 @@ model ComplaintOperation {
   assignedTo        String?   // اسم المسؤول كما في السجلات القديمة
   assignedToId      String?
   assignedUser      User?     @relation("AssignedOperations", fields: [assignedToId], references: [id], onDelete: SetNull)
+  branch            String    @default("الإدارة العامة")
+  createdById       String?
+  createdBy         User?     @relation("CreatedOperations", fields: [createdById], references: [id], onDelete: SetNull)
+  attachments       ComplaintOperationAttachment[]
   internalNotes     String?   // الرد الداخلي أو ملاحظات الإحالة
   dueDate           DateTime? // تاريخ الاستحقاق
   
@@ -87,6 +92,20 @@ model ComplaintOperation {
   
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+}
+
+model ComplaintOperationAttachment {
+  id          String             @id @default(uuid())
+  operationId String
+  operation   ComplaintOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  stage       String
+  fileName    String
+  mimeType    String
+  fileSize    Int
+  fileContent Bytes
+  createdAt   DateTime           @default(now())
+
+  @@index([operationId])
 }
 
 // الإدارة الميدانية (التوعية الأساسية والتكرارية)
