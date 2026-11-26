@@ -74,7 +74,8 @@ export async function POST(request: Request) {
     WHERE active = true AND project_number = ${projectNumber}
     LIMIT 1
   `
-  if (!project[0] || project[0].projectName !== projectName) {
+  const scope = getScope(session.user)
+  if (!project[0] || project[0].projectName !== projectName || (!scope.isAdmin && project[0].branch && project[0].branch !== scope.branch)) {
     return NextResponse.json({ error: "المشروع المحدد غير موجود في المرجع المعتمد أو لا يطابق رقمه." }, { status: 422 })
   }
 
