@@ -265,6 +265,7 @@ export default function NewOperationPage() {
       province, directorate, isolation, village, subject, description, additionalData,
       mainClass: isSimpleType ? type : mainClass, subClass, subClass2, sensitivity, priority,
       projectNo: searchNo, projectName: searchName, referredTo, internalReply,
+      minutesNo: selectedMinutesId,
       finalClosingText: isSimpleType ? "معالجة تلقائية عملية مبسطة" : finalClosingText,
       closingChannel: closingChannel || "الرسائل النصية", replyMessage,
       finalEvaluation: computedEvaluation, requiresAnalysis: isSimpleType ? "لا" : requiresAnalysis,
