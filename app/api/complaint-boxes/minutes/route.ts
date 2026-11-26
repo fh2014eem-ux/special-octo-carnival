@@ -69,11 +69,11 @@ export async function POST(request: Request) {
 
   const files = form.getAll("files").filter((value): value is File => value instanceof File && value.size > 0)
   if (files.length === 0) return NextResponse.json({ error: "لا يمكن حفظ المحضر دون إرفاق صورة أو ملف PDF للمحضر." }, { status: 422 })
-  if (files.length > 10 || files.some(file => !(file.type.startsWith("image/") || file.type === "application/pdf") || file.size > 8 * 1024 * 1024)) {
-    return NextResponse.json({ error: "يسمح بحد أقصى 10 مرفقات من الصور أو PDF، بحجم لا يتجاوز 8 ميجابايت لكل ملف." }, { status: 422 })
+  if (files.length > 10 || files.some(file => !(file.type.startsWith("image/") || file.type === "application/pdf") || file.size > 3 * 1024 * 1024)) {
+    return NextResponse.json({ error: "يسمح بحد أقصى 10 مرفقات من الصور أو PDF، وبحد إجمالي 4 ميجابايت للطلب." }, { status: 422 })
   }
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0)
-  if (totalBytes > 24 * 1024 * 1024) return NextResponse.json({ error: "إجمالي حجم المرفقات يتجاوز الحد المسموح (24 ميجابايت)." }, { status: 422 })
+  if (totalBytes > 4 * 1024 * 1024) return NextResponse.json({ error: "إجمالي حجم المرفقات يتجاوز الحد المسموح (4 ميجابايت)." }, { status: 422 })
 
   try {
     const latest = await prisma.boxOpeningMinute.findFirst({ where: { boxNumber }, orderBy: { createdAt: "desc" } })
