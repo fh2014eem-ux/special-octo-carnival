@@ -73,7 +73,7 @@ interface StoreContextValue extends DataState {
   refreshOperations: () => Promise<void>
   // actions
   addOperation: (op: Partial<Operation> & { type: Operation["type"] }) => Operation
-  updateOperation: (id: string, patch: Partial<Operation>) => void
+  updateOperation: (id: string, patch: Partial<Operation>) => Promise<void>
   addFieldReport: (r: Omit<FieldReport, "id" | "activityNo" | "createdAt" | "branch">) => void
   addBox: (b: Omit<ComplaintBox, "id" | "recordNo" | "createdAt" | "branch">) => void
   addAnalysis: (a: Omit<Analysis, "id" | "analysisNo" | "createdAt" | "branch">) => void
@@ -305,14 +305,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [data.operations.length, branchName, branchProvince],
   )
 
-  const updateOperation = useCallback<StoreContextValue["updateOperation"]>((id, patch) => {
-    setData((d) => ({
-      ...d,
-      operations: d.operations.map((o) =>
-        o.id === id ? { ...o, ...patch, updatedAt: new Date().toISOString() } : o,
-      ),
-    }))
-  }, [])
+  const updateOperation = useCallback<StoreContextValue["updateOperation"]>(async (id, patch) => {
+    const response = await fetch(`/api/operations/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    })
+    const body = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(body.error || "تعذر حفظ تحديث العملية.")
+    await refreshOperations()
+  }, [refreshOperations])
 
   const addFieldReport = useCallback<StoreContextValue["addFieldReport"]>(
     (r) => {
