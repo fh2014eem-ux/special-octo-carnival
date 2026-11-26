@@ -3,6 +3,8 @@ ALTER TABLE "ComplaintOperation"
   ADD COLUMN "branch" TEXT NOT NULL DEFAULT 'الإدارة العامة',
   ADD COLUMN "createdById" TEXT,
   ADD COLUMN "additionalData" TEXT,
+  ADD COLUMN "minutesNo" TEXT,
+  ADD COLUMN "responseMessage" TEXT,
   ADD CONSTRAINT "ComplaintOperation_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 CREATE INDEX "ComplaintOperation_branch_createdAt_idx" ON "ComplaintOperation"("branch", "createdAt");
 
