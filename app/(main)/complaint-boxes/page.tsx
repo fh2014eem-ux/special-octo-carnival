@@ -556,7 +556,12 @@ export default function ComplaintBoxesPage() {
           <Card className="border bg-white shadow-sm">
             <CardHeader className="bg-slate-50 border-b py-3">
               <CardTitle className="text-sm font-bold text-slate-900">سجل محاضر فتح الصناديق المعتمدة بالنظام</CardTitle>
-              {lastSavedMinutesId && <p className="text-xs font-bold text-emerald-800">آخر محضر تم توليده: {lastSavedMinutesId}</p>}
+              {lastSavedMinutesId && (
+                <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-950 space-y-1">
+                  <strong>تم إنشاء المحضر: {lastSavedMinutesId}</strong>
+                  <p>رقم الصندوق: {selectedMinute?.boxId ?? "—"} — رقم المشروع: {selectedMinute?.projectId ?? "—"} — اسم المشروع: {selectedMinute?.projectName ?? "—"}</p>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="p-4 overflow-x-auto text-xs">
               <table className="w-full text-right">
@@ -596,6 +601,31 @@ export default function ComplaintBoxesPage() {
                   <p>الوثائق المقبولة: {selectedMinute.totalAccepted} — المرفوضة: {selectedMinute.totalRejected} — الشكاوى: {selectedMinute.complaints} — البلاغات: {selectedMinute.reports} — الطلبات: {selectedMinute.requests} — المقترحات: {selectedMinute.suggestions} — الاستعلامات: {selectedMinute.inquiries} — الإطراءات: {selectedMinute.compliments}</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card className="border border-amber-200 bg-amber-50/40 shadow-sm">
+            <CardHeader className="border-b border-amber-200 py-3">
+              <CardTitle className="text-sm font-bold text-amber-950">تنبيهات الصناديق ومواعيد الفتح والتسليم</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-2 text-xs">
+              {registeredBoxes.map((box) => {
+                const latest = registeredMinutes.find((minute) => minute.boxId === box.boxId)
+                const openingDue = latest ? addDays(latest.openingDate, 7) : nextWednesday()
+                const deliveryDue = latest ? addDays(latest.deliveryDate, 7) : addDays(openingDue, 1)
+                const openingLate = openingDue < todayDate
+                const deliveryLate = deliveryDue < todayDate
+                return (
+                  <div key={box.boxId} className="rounded-lg border bg-white p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div><strong>{box.boxId}</strong> — {box.projectId} / {box.projectName}</div>
+                    <div className="flex flex-wrap gap-3">
+                      <span className={openingLate ? "font-bold text-rose-700" : "text-emerald-700"}>الفتح: {openingDue} — {openingLate ? "متأخر" : "موعد قادم"}</span>
+                      <span className={deliveryLate ? "font-bold text-rose-700" : "text-emerald-700"}>التسليم: {deliveryDue} — {deliveryLate ? "متأخر" : "موعد قادم"}</span>
+                    </div>
+                  </div>
+                )
+              })}
+              {registeredBoxes.length === 0 && <p className="text-slate-500">لا توجد صناديق مسجلة لعرض التنبيهات.</p>}
             </CardContent>
           </Card>
         </div>
