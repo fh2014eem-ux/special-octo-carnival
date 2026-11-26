@@ -97,6 +97,7 @@ export default function NewOperationPage() {
 
   const [subject, setSubject] = useState("")
   const [description, setDescription] = useState("")
+  const [additionalDetails, setAdditionalDetails] = useState("")
   const [attachment1, setAttachment1] = useState<File | null>(null)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
 
@@ -254,7 +255,7 @@ export default function NewOperationPage() {
 
     addOperation({
       type, channel, name, gender, capacity, phone, altPhone, email, accusedPerson,
-      province, directorate, isolation, village, subject, description,
+      province, directorate, isolation, village, subject, description, additionalDetails,
       mainClass: isSimpleType ? type : mainClass, subClass, subClass2, sensitivity, priority,
       projectNo: searchNo, projectName: searchName, referredTo, internalReply,
       finalClosingText: isSimpleType ? "معالجة تلقائية عملية مبسطة" : finalClosingText,
@@ -385,6 +386,10 @@ export default function NewOperationPage() {
               <div>
                 <label className="block font-semibold mb-1">ملخص الشكوى / العملية *</label>
                 <Textarea rows={3} value={description} onChange={(e) => { setDescription(e.target.value); setErrors({...errors, description: false}) }} placeholder="وصف كامل..." className={errors.description ? 'border-red-500 bg-red-50' : ''} />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">بيانات إضافية (اختياري)</label>
+                <Textarea rows={2} value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)} placeholder="أدخل أي بيانات أو تفاصيل إضافية إن وجدت..." />
               </div>
               <div className="p-2.5 bg-amber-50 border border-amber-300 rounded-xl flex items-center justify-between">
                 <span className="font-bold text-amber-900 text-[11px]">📎 إدراج مرفق الاستقبال (إلزامي للشكاوى والبلاغات)</span>
