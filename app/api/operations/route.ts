@@ -46,7 +46,8 @@ function toClientOperation(row: any) {
     subClass: row.subCategory || "",
     subClass2: row.secondSubCategory || "",
     sensitivity: row.sensitivity || "",
-    attachments: row.attachments || [],
+    attachments: (row.attachments || []).map((file: { fileName: string }) => file.fileName),
+    attachmentRecords: row.attachments || [],
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
