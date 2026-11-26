@@ -55,6 +55,8 @@ export default function OperationDetailPage({ params }: { params: Promise<{ id: 
             <span className="text-gray-400 block mb-0.5 font-bold">موضوع ووصف الشكوى/البلاغ:</span>
             <p className="text-gray-700 font-medium">{op.subject} — {op.description}</p>
           </div>
+          {op.additionalData && <div className="md:col-span-3 lg:col-span-4 bg-amber-50 p-2.5 rounded-lg border border-amber-100"><span className="text-amber-800 block mb-0.5 font-bold">بيانات إضافية:</span><p className="text-gray-700">{op.additionalData}</p></div>}
+          {op.attachmentRecords?.length ? <div className="md:col-span-3 lg:col-span-4 p-2.5 rounded-lg border"><span className="block mb-2 font-bold">المرفقات:</span><div className="flex flex-wrap gap-3">{op.attachmentRecords.map(file => <a key={file.id} className="text-blue-700 underline" href={`/api/operations/attachments/${file.id}`} target="_blank" rel="noreferrer">{file.fileName}</a>)}</div></div> : null}
         </CardContent>
       </Card>
 
