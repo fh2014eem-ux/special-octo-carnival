@@ -164,36 +164,72 @@ model FieldBox {
   reasonForPlace  String
   chosenBy        String
   branch          String
+  boxCount        Int      @default(1)
+  status          String   @default("نشط")
   createdAt       DateTime @default(now())
+  attachments     FieldBoxAttachment[]
+  minutes         BoxOpeningMinute[]
+}
+
+model FieldBoxAttachment {
+  id          String   @id @default(uuid())
+  boxNumber   String
+  box         FieldBox @relation(fields: [boxNumber], references: [boxNumber], onDelete: Cascade)
+  fileName    String
+  mimeType    String
+  fileSize    Int
+  fileContent Bytes
+  createdAt   DateTime @default(now())
+
+  @@index([boxNumber])
 }
 
 // محاضر فتح صناديق الشكاوى
 model BoxOpeningMinute {
-  id                String   @id @default(uuid())
-  minuteNumber      String   @unique
-  boxNumber         String
-  projectNumber     String
-  projectName       String
-  openingDate       String
-  expectedDate      String
-  deliveryDate      String
-  entryDate         String
-  openingCommittee  String
-  branch            String
-  
-  totalOperations   Int      // إجمالي العمليات
-  complaintsCount   Int      // شكاوى
-  reportsCount      Int      // بلاغات
-  requestsCount     Int      // طلبات
-  proposalsCount    Int      // مقترحات
-  inquiriesCount    Int      // استعلامات
-  praisesCount      Int      // إطراءات
-  
+  id                  String   @id @default(uuid())
+  minuteNumber        String   @unique
+  boxNumber           String
+  box                 FieldBox @relation(fields: [boxNumber], references: [boxNumber], onDelete: Restrict)
+  projectNumber       String
+  projectName         String
+  openingDate         String
+  expectedDate        String
+  deliveryDate        String
+  entryDate           String
+  minutesDate         String
+  openingCommittee    String
+  branch              String
+  totalDocuments      Int
+  delayStatus         String   @default("ضمن المدة")
+  totalOperations     Int
+  complaintsCount     Int
+  reportsCount        Int
+  requestsCount       Int
+  proposalsCount      Int
+  inquiriesCount      Int
+  praisesCount        Int
   acceptedAttachments Int
   rejectedAttachments Int
   rejectionReasons    String?
-  minuteAttachment    String?
-  createdAt         DateTime @default(now())
+  minuteAttachment   String?
+  createdAt           DateTime @default(now())
+  attachments         BoxOpeningMinuteAttachment[]
+
+  @@index([boxNumber, createdAt])
+  @@index([branch, createdAt])
+}
+
+model BoxOpeningMinuteAttachment {
+  id          String           @id @default(uuid())
+  minuteId    String
+  minute      BoxOpeningMinute @relation(fields: [minuteId], references: [id], onDelete: Cascade)
+  fileName    String
+  mimeType    String
+  fileSize    Int
+  fileContent Bytes
+  createdAt   DateTime         @default(now())
+
+  @@index([minuteId])
 }
 
 // إدارة المخزون
