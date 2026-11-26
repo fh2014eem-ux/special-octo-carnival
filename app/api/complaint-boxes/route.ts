@@ -55,11 +55,11 @@ export async function POST(request: Request) {
   if (!boxNumber || !projectNumber || !projectName || !installLocation || !installDate || !reasonForPlace || !chosenBy || !Number.isInteger(boxCount) || boxCount < 1) {
     return NextResponse.json({ error: "يرجى استكمال جميع بيانات الصندوق والتأكد من عدد الصناديق." }, { status: 422 })
   }
-  const project = await prisma.$queryRaw<Array<{ projectName: string }>>`
-    SELECT project_name AS "projectName" FROM public.chm_reference_projects
+  const project = await prisma.$queryRaw<Array<{ projectName: string; branch: string | null }>>`
+    SELECT project_name AS "projectName", branch FROM public.chm_reference_projects
     WHERE active = true AND project_number = ${projectNumber} LIMIT 1
   `
-  if (!project[0] || project[0].projectName !== projectName) return NextResponse.json({ error: "المشروع غير موجود في قاعدة المشاريع المرجعية أو أن اسمه لا يطابق رقمه." }, { status: 422 })
+  if (!project[0] || project[0].projectName !== projectName || (!scope.isAdmin && project[0].branch && project[0].branch !== scope.branch)) return NextResponse.json({ error: "المشروع غير موجود في قاعدة المشاريع المرجعية أو لا يتبع الفرع الحالي." }, { status: 422 })
 
   const files = form.getAll("images").filter((value): value is File => value instanceof File && value.size > 0)
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0)
