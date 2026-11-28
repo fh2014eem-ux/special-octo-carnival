@@ -29,7 +29,7 @@ type RegisteredMinutes = {
 }
 
 // لا تُعرض محاضر تجريبية؛ تُملأ القائمة فقط عند ربط سجل المحاضر الفعلي.
-const REGISTERED_MINUTES_DATABASE: RegisteredMinutes[] = []
+
 
 type ReferenceLocation = {
   governorate: string
@@ -81,6 +81,7 @@ export default function NewOperationPage() {
   // حقل رقم المحضر المربوط بصندوق الشكاوى
   const [selectedMinutesId, setSelectedMinutesId] = useState("")
   const [autoFetchedMinutesData, setAutoFetchedMinutesData] = useState<RegisteredMinutes | null>(null)
+  const [registeredMinutesDatabase, setRegisteredMinutesDatabase] = useState<RegisteredMinutes[]>([])
 
   // المرحلة الثانية
   const [mainClass, setMainClass] = useState("")
@@ -171,6 +172,26 @@ export default function NewOperationPage() {
     return () => { cancelled = true }
   }, [])
 
+  const selectedProject = referenceProjects.find((p) => p.projectNumber === searchNo) ?? null
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/complaint-boxes", { credentials: "same-origin", cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || "تعذر تحميل محاضر الفتح")
+        return Array.isArray(result.minutes) ? result.minutes : []
+      })
+      .then((minutes) => {
+        if (!cancelled) setRegisteredMinutesDatabase(minutes.map((minute: any) => ({
+          minutesId: minute.minuteNumber, boxId: minute.boxNumber, projectId: minute.projectNumber,
+          projectName: minute.projectName, officer: minute.openingCommittee || "",
+        })))
+      })
+      .catch((error) => { if (!cancelled) console.error("تعذر تحميل محاضر الفتح", error) })
+    return () => { cancelled = true }
+  }, [])
+
   const filteredProjects = referenceProjects.filter((p) => {
     const matchNo = searchNo ? p.projectNumber.includes(searchNo) : true
     const matchName = searchName ? p.projectName.includes(searchName) : true
@@ -243,6 +264,10 @@ export default function NewOperationPage() {
       toast.error("يرجى استكمال تحديد كافة التصنيفات للشكاوى والبلاغات.")
       return false
     }
+    if ((type === "شكوى" || type === "بلاغ") && !attachment2) {
+      toast.error("يرجى إرفاق مستند الإحالة أو المعالجة قبل الانتقال إلى المرحلة الثالثة.")
+      return false
+    }
     if (!internalReply.trim()) {
       toast.error("يرجى إدخال نص الرد الداخلي للعملية.")
       return false
@@ -253,6 +278,7 @@ export default function NewOperationPage() {
   const handleSelectProject = (proj: ReferenceProject) => {
     setSearchNo(proj.projectNumber)
     setSearchName(proj.projectName)
+    setReferredTo(String(proj.data?.["ضابط المشروع"] ?? "").trim())
     toast.success(`تم اختيار المشروع من قاعدة البيانات: ${proj.projectNumber}`)
   }
 
@@ -466,6 +492,21 @@ export default function NewOperationPage() {
                 </div>
               </div>
               {categoriesLoading && <p className="text-slate-500">جارٍ تحميل التصنيفات المعتمدة من قاعدة Neon...</p>}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded-xl border bg-slate-50 p-4">
+                <div>
+                  <label className="mb-1 block font-semibold">الأولوية</label>
+                  <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full rounded-lg border bg-white p-2">
+                    <option value="عاجلة">عاجلة</option><option value="عالية">عالية</option><option value="عادية (افتراضي)">عادية</option><option value="منخفضة">منخفضة</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block font-semibold">درجة الحساسية</label>
+                  <select value={sensitivity} onChange={(e) => setSensitivity(e.target.value)} className="w-full rounded-lg border bg-white p-2">
+                    <option value="منخفضة الحساسية">منخفضة الحساسية</option><option value="متوسطة الحساسية">متوسطة الحساسية</option><option value="عالية الحساسية">عالية الحساسية</option>
+                  </select>
+                </div>
+              </div>
+
               {categoriesError && <p role="alert" className="text-red-700">{categoriesError}</p>}
               </>
             ) : (
@@ -483,13 +524,13 @@ export default function NewOperationPage() {
                     <label className="block font-semibold mb-1">اختر رقم المحضر من السجل المعتمد *</label>
                     <select value={selectedMinutesId} onChange={(e) => handleSelectMinutes(e.target.value)} className="w-full p-2.5 border rounded-lg bg-white font-bold font-mono text-slate-800">
                       <option value="">-- اختر رقم المحضر المقيد مسبقاً --</option>
-                      {REGISTERED_MINUTES_DATABASE.map((m: RegisteredMinutes) => (
+                      {registeredMinutesDatabase.map((m: RegisteredMinutes) => (
                         <option key={m.minutesId} value={m.minutesId}>
                           {m.minutesId} | صندوق: {m.boxId} | مشروع: {m.projectId} - {m.projectName}
                         </option>
                       ))}
                     </select>
-                    {REGISTERED_MINUTES_DATABASE.length === 0 && <p className="mt-2 text-xs text-amber-700">لا توجد محاضر فتح مسجلة في قاعدة البيانات بعد؛ لن تظهر بيانات تجريبية هنا.</p>}
+                    {registeredMinutesDatabase.length === 0 && <p className="mt-2 text-xs text-amber-700">لا توجد محاضر فتح مسجلة في قاعدة البيانات بعد؛ لن تظهر بيانات تجريبية هنا.</p>}
                   </div>
 
                   {autoFetchedMinutesData && (
@@ -519,6 +560,14 @@ export default function NewOperationPage() {
                   {projectsLoading && <p className="text-xs text-slate-500 mt-2">جارٍ تحميل المشاريع من قاعدة البيانات...</p>}
                   {projectsError && <p className="text-xs text-red-600 mt-2">{projectsError}</p>}
                   {!projectsLoading && !projectsError && referenceProjects.length === 0 && <p className="text-xs text-amber-700 mt-2">لا توجد مشاريع نشطة في قاعدة البيانات حالياً.</p>}
+                  {selectedProject && (
+                    <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-[11px] text-emerald-950">
+                      <div>الممول: <b>{String(selectedProject.data?.["الممول"] || "—")}</b></div>
+                      <div>القطاع الرئيسي: <b>{String(selectedProject.data?.["القطاع الرئيسي"] || "—")}</b></div>
+                      <div>الوحدة: <b>{String(selectedProject.data?.["الوحدة"] || "—")}</b></div>
+                      <div>ضابط المشروع: <b>{String(selectedProject.data?.["ضابط المشروع"] || "—")}</b></div>
+                    </div>
+                  )}
                   {filteredProjects.length > 0 && (searchNo || searchName) && (
                     <div className="mt-2 max-h-36 overflow-y-auto border bg-white rounded-lg p-2 space-y-1">
                       {filteredProjects.map(p => (
