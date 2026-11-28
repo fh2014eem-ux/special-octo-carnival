@@ -44,7 +44,9 @@ export async function POST(request: Request) {
   const deliveryMethod = String(form.get("deliveryMethod") ?? "يدوياً").trim()
   const deliveryDelayReason = String(form.get("deliveryDelayReason") ?? "").trim()
   const openingDelayReason = String(form.get("openingDelayReason") ?? "").trim()
-  const submittedVia = String(form.get("submittedVia") ?? "يدوياً").trim()
+  const isMobileClient = request.headers.get("x-chm-client") === "mobile"
+  const submittedVia = isMobileClient ? "تطبيق الهاتف" : String(form.get("submittedVia") ?? "يدوياً").trim()
+  const effectiveDeliveryMethod = isMobileClient ? "تطبيق الهاتف" : deliveryMethod
   const totalDocuments = Number(form.get("totalDocuments"))
   const accepted = Number(form.get("accepted"))
   const rejected = Number(form.get("rejected"))
