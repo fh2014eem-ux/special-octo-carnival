@@ -134,6 +134,9 @@ model FieldAwareness {
   description       String
   attachments       String?
   status            String   // مسودة، مرفق، معتمد، مؤرشف
+  details           Json?
+  hasBox            Boolean  @default(false)
+  boxCount          Int      @default(0)
   branch            String
   createdAt         DateTime @default(now())
 }
