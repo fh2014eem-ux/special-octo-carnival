@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 
 type ProjectOption = { projectNumber: string; projectName: string; branch?: string | null; data?: Record<string, unknown> | null }
+type BoxEntry = { installLocation: string; installDate: string; reasonForPlace: string; chosenBy: string }
 type Attachment = { id: string; fileName: string; mimeType: string; fileSize: number }
 type ComplaintBoxItem = {
   id: string; boxNumber: string; projectNumber: string; projectName: string
@@ -57,6 +58,7 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
   const [selectedProject, setSelectedProject] = useState<ProjectOption | null>(null)
   const [boxNumber, setBoxNumber] = useState("")
   const [boxesCount, setBoxesCount] = useState(1)
+  const [boxEntries, setBoxEntries] = useState<BoxEntry[]>([{ installLocation: "", installDate: yemenToday(), reasonForPlace: "", chosenBy: "" }])
   const [installDate, setInstallDate] = useState(yemenToday())
   const [boxLocation, setBoxLocation] = useState("")
   const [boxReason, setBoxReason] = useState("")
@@ -179,10 +181,11 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
     const form = new FormData()
     form.set("projectNumber", selectedProject.projectNumber)
     form.set("projectName", selectedProject.projectName)
-    form.set("installLocation", boxLocation)
-    form.set("installDate", installDate)
-    form.set("reasonForPlace", boxReason)
-    form.set("chosenBy", boxChosenBy)
+    form.set("boxes", JSON.stringify(boxEntries))
+    form.set("installLocation", boxEntries[0]?.installLocation || boxLocation)
+    form.set("installDate", boxEntries[0]?.installDate || installDate)
+    form.set("reasonForPlace", boxEntries[0]?.reasonForPlace || boxReason)
+    form.set("chosenBy", boxEntries[0]?.chosenBy || boxChosenBy)
     form.set("openingResponsibleName", openingResponsibleName)
     form.set("openingResponsibleRole", openingResponsibleRole)
     form.set("openingResponsiblePhone", openingResponsiblePhone)
@@ -199,7 +202,7 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
       const body = await response.json()
       if (!response.ok) throw new Error(body.error || "تعذر حفظ الصندوق")
       setRegisteredBoxes(current => [body.box as ComplaintBoxItem, ...current])
-      setBoxNumber(""); setBoxLocation(""); setBoxReason(""); setBoxChosenBy(""); setOpeningResponsibleName(""); setOpeningResponsibleRole(""); setOpeningResponsiblePhone(""); setOpeningResponsibleNotes(""); setDeliveryResponsibleName(""); setDeliveryResponsibleRole(""); setDeliveryResponsiblePhone(""); setDeliveryResponsibleNotes(""); setBoxFiles([]); setSelectedProject(null)
+      setBoxNumber(""); setBoxLocation(""); setBoxReason(""); setBoxChosenBy(""); setBoxEntries([{ installLocation: "", installDate: yemenToday(), reasonForPlace: "", chosenBy: "" }]); setBoxesCount(1); setOpeningResponsibleName(""); setOpeningResponsibleRole(""); setOpeningResponsiblePhone(""); setOpeningResponsibleNotes(""); setDeliveryResponsibleName(""); setDeliveryResponsibleRole(""); setDeliveryResponsiblePhone(""); setDeliveryResponsibleNotes(""); setBoxFiles([]); setSelectedProject(null)
       toast.success("تم حفظ الصندوق ومرفقاته في قاعدة البيانات.")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذر حفظ الصندوق")
@@ -328,13 +331,19 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
               {selectedProject && <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-2"><div>المشروع المحدد: <b>{selectedProject.projectNumber}</b> — <b>{selectedProject.projectName}</b></div><div className="grid grid-cols-1 md:grid-cols-3 gap-2"><span>القطاع الرئيسي: <b>{String(selectedProject.data?.["القطاع الرئيسي"] ?? "—")}</b></span><span>الوحدة: <b>{String(selectedProject.data?.["الوحدة"] ?? "—")}</b></span><span>الممول: <b>{String(selectedProject.data?.["الممول"] ?? "—")}</b></span></div></div>}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="rounded-lg border bg-blue-50 p-3 text-blue-900"><label className="block font-semibold mb-1">رقم الصندوق</label><p className="font-bold">يُنشأ آلياً عند الحفظ</p></div>
-                <div><label className="block font-semibold mb-1">عدد الصناديق *</label><Input type="number" min={1} value={boxesCount} onChange={e => setBoxesCount(Number(e.target.value))} /></div>
-                <div><label className="block font-semibold mb-1">تاريخ التعليق *</label><Input type="date" value={installDate} onChange={e => setInstallDate(e.target.value)} /></div>
+                <div><label className="block font-semibold mb-1">عدد الصناديق *</label><Input type="number" min={1} max={20} value={boxesCount} onChange={e => { const count = Math.max(1, Math.min(20, Number(e.target.value) || 1)); setBoxesCount(count); setBoxEntries(current => Array.from({ length: count }, (_, index) => current[index] || { installLocation: "", installDate: yemenToday(), reasonForPlace: "", chosenBy: "" })); }} /></div>
+                <div className="rounded-lg border bg-blue-50 p-3 text-blue-900"><p className="font-semibold">سيتم إنشاء {boxesCount} رقم صندوق آلي مستقل</p><p className="text-xs">أدخل بيانات موقع وتركيب كل صندوق بصورة منفصلة أدناه.</p></div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div><label className="block font-semibold mb-1">مكان التعليق *</label><Input value={boxLocation} onChange={e => setBoxLocation(e.target.value)} /></div>
-                <div><label className="block font-semibold mb-1">سبب اختيار المكان *</label><Input value={boxReason} onChange={e => setBoxReason(e.target.value)} /></div>
-                <div><label className="block font-semibold mb-1">من اختار المكان *</label><Input value={boxChosenBy} onChange={e => setBoxChosenBy(e.target.value)} /></div>
+              <div className="space-y-3">
+                {boxEntries.map((entry, index) => <div key={index} className="rounded-xl border p-4 space-y-3">
+                  <h3 className="font-bold text-blue-900">بيانات الصندوق رقم {index + 1}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div><label className="block font-semibold mb-1">مكان التعليق *</label><Input value={entry.installLocation} onChange={e => setBoxEntries(rows => rows.map((row, i) => i === index ? { ...row, installLocation: e.target.value } : row))} /></div>
+                    <div><label className="block font-semibold mb-1">تاريخ التعليق *</label><Input type="date" value={entry.installDate} onChange={e => setBoxEntries(rows => rows.map((row, i) => i === index ? { ...row, installDate: e.target.value } : row))} /></div>
+                    <div><label className="block font-semibold mb-1">سبب اختيار المكان *</label><Input value={entry.reasonForPlace} onChange={e => setBoxEntries(rows => rows.map((row, i) => i === index ? { ...row, reasonForPlace: e.target.value } : row))} /></div>
+                    <div><label className="block font-semibold mb-1">من اختار المكان *</label><Input value={entry.chosenBy} onChange={e => setBoxEntries(rows => rows.map((row, i) => i === index ? { ...row, chosenBy: e.target.value } : row))} /></div>
+                  </div>
+                </div>)}
               </div>
               <div className="rounded-xl border p-4 space-y-3">
                 <h3 className="font-bold text-blue-900">بيانات المعني بفتح الصندوق</h3>
