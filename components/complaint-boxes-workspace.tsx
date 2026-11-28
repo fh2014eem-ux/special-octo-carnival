@@ -174,7 +174,7 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
   }
 
   const handleSaveBox = async () => {
-    if (!selectedProject || !boxLocation.trim() || !installDate || !boxReason.trim() || !boxChosenBy.trim() || !openingResponsibleName.trim() || !deliveryResponsibleName.trim() || boxesCount < 1) {
+    if (!selectedProject || boxEntries.length !== boxesCount || boxEntries.some(entry => !entry.installLocation.trim() || !entry.installDate || !entry.reasonForPlace.trim() || !entry.chosenBy.trim()) || !openingResponsibleName.trim() || !deliveryResponsibleName.trim() || boxesCount < 1) {
       toast.error("يرجى اختيار المشروع واستكمال جميع بيانات الصندوق.")
       return
     }
@@ -201,7 +201,7 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
       const response = await fetch("/api/complaint-boxes", { method: "POST", body: form })
       const body = await response.json()
       if (!response.ok) throw new Error(body.error || "تعذر حفظ الصندوق")
-      setRegisteredBoxes(current => [body.box as ComplaintBoxItem, ...current])
+      setRegisteredBoxes(current => [...(Array.isArray(body.boxes) ? body.boxes : [body.box]) as ComplaintBoxItem[], ...current])
       setBoxNumber(""); setBoxLocation(""); setBoxReason(""); setBoxChosenBy(""); setBoxEntries([{ installLocation: "", installDate: yemenToday(), reasonForPlace: "", chosenBy: "" }]); setBoxesCount(1); setOpeningResponsibleName(""); setOpeningResponsibleRole(""); setOpeningResponsiblePhone(""); setOpeningResponsibleNotes(""); setDeliveryResponsibleName(""); setDeliveryResponsibleRole(""); setDeliveryResponsiblePhone(""); setDeliveryResponsibleNotes(""); setBoxFiles([]); setSelectedProject(null)
       toast.success("تم حفظ الصندوق ومرفقاته في قاعدة البيانات.")
     } catch (error) {
