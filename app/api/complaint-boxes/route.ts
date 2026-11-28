@@ -63,7 +63,7 @@ export async function POST(request: Request) {
   if (!projectNumber || !projectName || !installLocation || !installDate || !reasonForPlace || !chosenBy || !openingResponsibleName || !deliveryResponsibleName || !Number.isInteger(boxCount) || boxCount < 1) {
     return NextResponse.json({ error: "يرجى استكمال جميع بيانات الصندوق والتأكد من عدد الصناديق." }, { status: 422 })
   }
-  const project = await prisma.$queryRaw<Array<{ projectName: string; branch: string | null }>>`
+  const project = await prisma.$queryRaw<Array<{ projectName: string; branch: string | null; data: unknown }>>`
     SELECT project_name AS "projectName", branch, data FROM public.chm_reference_projects
     WHERE active = true AND project_number = ${projectNumber} LIMIT 1
   `
