@@ -77,6 +77,11 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
   const [selectedMinute, setSelectedMinute] = useState<OpeningMinutesItem | null>(null)
   const [lastSavedMinutesId, setLastSavedMinutesId] = useState("")
   const [minutesDate, setMinutesDate] = useState("")
+  const [deliveredBy, setDeliveredBy] = useState("")
+  const [deliveryMethod, setDeliveryMethod] = useState("يدوياً")
+  const [deliveryDelayReason, setDeliveryDelayReason] = useState("")
+  const [openingDelayReason, setOpeningDelayReason] = useState("")
+  const [submittedVia, setSubmittedVia] = useState("يدوياً")
   const [totalDocuments, setTotalDocuments] = useState(0)
   const [totalAccepted, setTotalAccepted] = useState(0)
   const [totalRejected, setTotalRejected] = useState(0)
@@ -157,6 +162,7 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
 
   const resetMinuteForm = () => {
     setMinutesDate("")
+    setDeliveredBy(""); setDeliveryMethod("يدوياً"); setDeliveryDelayReason(""); setOpeningDelayReason(""); setSubmittedVia("يدوياً")
     setTotalDocuments(0)
     setTotalAccepted(0)
     setTotalRejected(0)
@@ -214,6 +220,11 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
     form.set("projectNumber", selectedBoxObj.projectNumber)
     form.set("projectName", selectedBoxObj.projectName)
     form.set("minutesDate", minutesDate)
+    form.set("deliveredBy", deliveredBy || selectedBoxObj.deliveryResponsibleName || "")
+    form.set("deliveryMethod", deliveryMethod)
+    form.set("deliveryDelayReason", deliveryDelayReason)
+    form.set("openingDelayReason", openingDelayReason)
+    form.set("submittedVia", submittedVia)
     form.set("totalDocuments", String(totalDocuments))
     form.set("accepted", String(totalAccepted))
     form.set("rejected", String(totalRejected))
@@ -375,6 +386,13 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
                     <div><label className="block font-semibold mb-1">تاريخ استلام المحضر *</label><Input type="date" value={minutesDate} onChange={e => setMinutesDate(e.target.value)} className="bg-white" /></div>
                     <div><label className="block font-semibold mb-1">التاريخ المتوقع لتسليم المحضر</label><Input type="date" value={deliveryDate} disabled className="bg-slate-200 font-mono" /></div>
                     <div><label className="block font-semibold mb-1">تاريخ إدخال المحضر</label><Input type="date" value={entryDate} disabled className="bg-slate-200 font-mono" /></div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded-xl border bg-white p-4">
+                    <div><label className="block mb-1 font-semibold">من قام بتسليم المحضر</label><Input value={deliveredBy || selectedBoxObj?.deliveryResponsibleName || ""} onChange={e => setDeliveredBy(e.target.value)} /></div>
+                    <div><label className="block mb-1 font-semibold">طريقة تسليم المحضر</label><select value={deliveryMethod} onChange={e => setDeliveryMethod(e.target.value)} className="w-full rounded-md border bg-white p-2"><option>تطبيق الهاتف</option><option>يدوياً</option><option>الواتس اب</option><option>أخرى</option></select></div>
+                    <div><label className="block mb-1 font-semibold">مصدر إدخال المحضر</label><select value={submittedVia} onChange={e => setSubmittedVia(e.target.value)} className="w-full rounded-md border bg-white p-2"><option>يدوياً</option><option>تطبيق الهاتف</option><option>الواتس اب</option><option>أخرى</option></select></div>
+                    {todayDate > expectedDate && <div className="md:col-span-2"><label className="block mb-1 font-semibold text-rose-700">سبب تأخر فتح الصندوق</label><Textarea rows={2} value={openingDelayReason} onChange={e => setOpeningDelayReason(e.target.value)} placeholder="اكتب سبب التأخير..." /></div>}
+                    {todayDate > deliveryDate && <div className="md:col-span-2"><label className="block mb-1 font-semibold text-rose-700">سبب التأخير في تسليم المحضر</label><Textarea rows={2} value={deliveryDelayReason} onChange={e => setDeliveryDelayReason(e.target.value)} placeholder="اكتب سبب التأخير..." /></div>}
                   </div>
                   <div className="flex justify-between items-center p-3 bg-slate-900 text-white rounded-xl font-bold"><span>حالة الالتزام بموعد الفتح وتسليم المحضر:</span><span className="text-sm">{delayStatus}</span></div>
                 </div>
