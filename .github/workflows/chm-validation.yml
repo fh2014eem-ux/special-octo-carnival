@@ -28,10 +28,24 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: chm_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d chm_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/chm_ci?schema=public"
       PRISMA_DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/chm_ci?schema=public"
-      BETTER_AUTH_SECRET: "ci-only-not-a-production-secret"
+      BETTER_AUTH_SECRET: "ci-only-test-secret-with-at-least-32-characters"
       BETTER_AUTH_URL: "http://localhost:3000"
       USE_MOCK_DATA: "true"
       NEXT_TELEMETRY_DISABLED: "1"
@@ -56,6 +70,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm run db:generate
+
+      - name: Apply all Prisma migrations to a clean PostgreSQL database
+        run: pnpm run db:deploy
 
       - name: Run repository static verification
         run: node scripts/verify-project.mjs
