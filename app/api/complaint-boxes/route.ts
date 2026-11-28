@@ -82,7 +82,7 @@ export async function POST(request: Request) {
   try {
     const projectData = project[0].data && typeof project[0].data === "object" ? project[0].data as Record<string, unknown> : {}
     const createdBoxes = await prisma.$transaction(async (tx) => Promise.all(boxEntries.map(async (entry) => {
-      const boxNumber = `BOX-${new Date().getFullYear()}-${crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`
+      const boxNumber = `BOX-${new Date().getFullYear()}-${crypto.randomUUID().replace(/-/g, "").toUpperCase()}`
       const entryFiles = await Promise.all(files.map(async file => ({
         fileName: file.name.replace(/[\\/\\0]/g, "_").slice(0, 240),
         mimeType: file.type,
