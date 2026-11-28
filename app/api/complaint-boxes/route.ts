@@ -44,19 +44,27 @@ export async function POST(request: Request) {
   if (!scope.branch) return NextResponse.json({ error: "حساب المستخدم غير مرتبط بفرع." }, { status: 403 })
 
   const form = await request.formData()
-  const boxNumber = String(form.get("boxNumber") ?? "").trim()
+  const requestedBoxNumber = String(form.get("boxNumber") ?? "").trim()
   const projectNumber = String(form.get("projectNumber") ?? "").trim()
   const projectName = String(form.get("projectName") ?? "").trim()
   const installLocation = String(form.get("installLocation") ?? "").trim()
   const installDate = String(form.get("installDate") ?? "")
   const reasonForPlace = String(form.get("reasonForPlace") ?? "").trim()
   const chosenBy = String(form.get("chosenBy") ?? "").trim()
+  const openingResponsibleName = String(form.get("openingResponsibleName") ?? "").trim()
+  const openingResponsibleRole = String(form.get("openingResponsibleRole") ?? "").trim()
+  const openingResponsiblePhone = String(form.get("openingResponsiblePhone") ?? "").trim()
+  const openingResponsibleNotes = String(form.get("openingResponsibleNotes") ?? "").trim()
+  const deliveryResponsibleName = String(form.get("deliveryResponsibleName") ?? "").trim()
+  const deliveryResponsibleRole = String(form.get("deliveryResponsibleRole") ?? "").trim()
+  const deliveryResponsiblePhone = String(form.get("deliveryResponsiblePhone") ?? "").trim()
+  const deliveryResponsibleNotes = String(form.get("deliveryResponsibleNotes") ?? "").trim()
   const boxCount = Number(form.get("boxCount") ?? 1)
-  if (!boxNumber || !projectNumber || !projectName || !installLocation || !installDate || !reasonForPlace || !chosenBy || !Number.isInteger(boxCount) || boxCount < 1) {
+  if (!projectNumber || !projectName || !installLocation || !installDate || !reasonForPlace || !chosenBy || !openingResponsibleName || !deliveryResponsibleName || !Number.isInteger(boxCount) || boxCount < 1) {
     return NextResponse.json({ error: "يرجى استكمال جميع بيانات الصندوق والتأكد من عدد الصناديق." }, { status: 422 })
   }
   const project = await prisma.$queryRaw<Array<{ projectName: string; branch: string | null }>>`
-    SELECT project_name AS "projectName", branch FROM public.chm_reference_projects
+    SELECT project_name AS "projectName", branch, data FROM public.chm_reference_projects
     WHERE active = true AND project_number = ${projectNumber} LIMIT 1
   `
   const referenceBranch = scope.branch === "فرع المكلا" ? "فرع حضرموت" : scope.branch
@@ -68,10 +76,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "يسمح بإرفاق 10 صور كحد أقصى، بحد إجمالي 4 ميجابايت للطلب." }, { status: 422 })
   }
   try {
+    const boxNumber = requestedBoxNumber || `BOX-${new Date().getFullYear()}-${Date.now()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`
+    const projectData = project[0].data && typeof project[0].data === "object" ? project[0].data as Record<string, unknown> : {}
     const box = await prisma.fieldBox.create({
       data: {
         boxNumber, projectNumber, projectName, installLocation, installDate,
-        reasonForPlace, chosenBy, branch: scope.branch, boxCount, status: "نشط",
+        reasonForPlace, chosenBy, openingResponsibleName, openingResponsibleRole: openingResponsibleRole || null,
+        openingResponsiblePhone: openingResponsiblePhone || null, openingResponsibleNotes: openingResponsibleNotes || null,
+        deliveryResponsibleName, deliveryResponsibleRole: deliveryResponsibleRole || null,
+        deliveryResponsiblePhone: deliveryResponsiblePhone || null, deliveryResponsibleNotes: deliveryResponsibleNotes || null,
+        projectSector: String(projectData["القطاع الرئيسي"] ?? "") || null,
+        projectUnit: String(projectData["الوحدة"] ?? "") || null,
+        funder: String(projectData["الممول"] ?? "") || null,
+        branch: scope.branch, boxCount, status: "يعمل",
         attachments: files.length ? { create: await Promise.all(files.map(async file => ({
           fileName: file.name.replace(/[\\/\\0]/g, "_").slice(0, 240),
           mimeType: file.type,
