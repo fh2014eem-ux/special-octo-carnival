@@ -309,7 +309,7 @@ export default function NewOperationPage() {
       if (!response.ok) throw new Error(body.error || "تعذر حفظ العملية")
       await refreshOperations()
       toast.success(`تم حفظ العملية ${body.operation?.operationNo || ""} في قاعدة البيانات بنجاح. الحالة: "${computedStatus}"`)
-      router.push("/operations")
+      router.push("/operations/records")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذر حفظ العملية في قاعدة البيانات.")
     } finally {
