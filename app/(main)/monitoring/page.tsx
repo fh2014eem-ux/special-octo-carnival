@@ -148,7 +148,7 @@ export default function FieldMonitoringPage() {
     <div className="max-w-7xl mx-auto p-6 space-y-6 dir-rtl text-right font-sans">
       <div className="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">📍 المحور السادس: المتابعة الميدانية والرقابة</h1>
+          <h1 className="text-lg font-bold text-gray-900">📍 الإدارة المتابعة والتقييم</h1>
           <p className="text-xs text-gray-500 mt-0.5">تسجيل الزيارات وربطها بالمشاريع وحفظ التقارير والصور مركزياً</p>
         </div>
       </div>
