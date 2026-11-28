@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -42,8 +43,8 @@ function nextWeeklyDate(base: string) {
   return candidate
 }
 
-export default function ComplaintBoxesPage() {
-  const [activeTab, setActiveTab] = useState<"boxes" | "minutes">("boxes")
+export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTab?: "boxes" | "minutes" }) {
+  const [activeTab] = useState<"boxes" | "minutes">(initialTab)
   const [projects, setProjects] = useState<ProjectOption[]>([])
   const [registeredBoxes, setRegisteredBoxes] = useState<ComplaintBoxItem[]>([])
   const [registeredMinutes, setRegisteredMinutes] = useState<OpeningMinutesItem[]>([])
@@ -243,14 +244,24 @@ export default function ComplaintBoxesPage() {
           <p className="text-xs text-slate-500 mt-1">تثبيت الصناديق الميدانية، تحرير محاضر الفتح، والتحقق الآلي والحفظ المركزي</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-bold">
-          <Button variant={activeTab === "boxes" ? "default" : "outline"} onClick={() => setActiveTab("boxes")} className={activeTab === "boxes" ? "bg-blue-900 text-white" : ""}>📦 صناديق الشكاوى</Button>
-          <Button variant={activeTab === "minutes" ? "default" : "outline"} onClick={() => setActiveTab("minutes")} className={activeTab === "minutes" ? "bg-blue-900 text-white" : ""}>📑 محاضر الفتح</Button>
+          {activeTab === "boxes" ? (
+            <>
+              <a href="#box-form" className="rounded-lg bg-blue-900 px-4 py-2 text-white">＋ إضافة صندوق</a>
+              <a href="#box-data" className="rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 text-blue-900">▤ بيانات صناديق الشكاوى</a>
+            </>
+          ) : (
+            <>
+              <a href="#minutes-form" className="rounded-lg bg-violet-800 px-4 py-2 text-white">＋ إضافة محضر</a>
+              <a href="#minutes-data" className="rounded-lg border border-violet-300 bg-violet-50 px-4 py-2 text-violet-900">▤ حركة المحاضر</a>
+            </>
+          )}
+          <Link href="/complaint-boxes" className="rounded-lg border px-4 py-2 text-slate-700">↩ العودة للصفحة السابقة</Link>
         </div>
       </div>
 
       {activeTab === "boxes" && (
         <div className="space-y-6">
-          <Card className="border bg-white shadow-sm">
+          <Card id="box-form" className="border bg-white shadow-sm">
             <CardHeader className="bg-slate-50 border-b py-3"><CardTitle className="text-sm font-bold text-slate-900">تسجيل صندوق شكاوى ميداني جديد</CardTitle></CardHeader>
             <CardContent className="p-6 space-y-4 text-xs">
               <div className="bg-slate-50 p-4 rounded-xl border space-y-3">
@@ -285,7 +296,7 @@ export default function ComplaintBoxesPage() {
             </CardContent>
           </Card>
 
-          <Card className="border bg-white shadow-sm">
+          <Card id="box-data" className="border bg-white shadow-sm">
             <CardHeader className="bg-slate-50 border-b py-3"><CardTitle className="text-sm font-bold text-slate-900">سجل صناديق الشكاوى الميدانية المسجلة</CardTitle></CardHeader>
             <CardContent className="p-4 overflow-x-auto text-xs">
               <table className="w-full text-right">
@@ -304,7 +315,7 @@ export default function ComplaintBoxesPage() {
 
       {activeTab === "minutes" && (
         <div className="space-y-6">
-          <Card className="border bg-white shadow-sm">
+          <Card id="minutes-form" className="border bg-white shadow-sm">
             <CardHeader className="bg-slate-50 border-b py-3"><CardTitle className="text-sm font-bold text-slate-900">تسجيل محضر فتح صندوق شكاوى (الربط التلقائي والتحقق)</CardTitle></CardHeader>
             <CardContent className="p-6 space-y-6 text-xs">
               <div className="bg-slate-50 p-4 rounded-xl border space-y-3">
