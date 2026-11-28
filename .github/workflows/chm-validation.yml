@@ -62,3 +62,18 @@ jobs:
 
       - name: Production build
         run: pnpm run build
+
+      - name: Package clean local-testing source ZIP
+        run: |
+          mkdir -p dist/chm-sfd-local
+          git archive HEAD | tar --exclude='CHM-working-checkpoint-2026-11-14-repair-pass1.zip' -x -C dist/chm-sfd-local
+          cd dist
+          zip -qr ../CHM-SFD-local-testing.zip chm-sfd-local
+
+      - name: Upload local-testing ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: CHM-SFD-local-testing
+          path: CHM-SFD-local-testing.zip
+          if-no-files-found: error
+          retention-days: 14
