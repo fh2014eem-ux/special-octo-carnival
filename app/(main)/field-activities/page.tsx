@@ -140,13 +140,13 @@ export default function FieldManagementPage() {
   const [receiverPhone, setReceiverPhone] = useState("")
   const [minutesBookNotes, setMinutesBookNotes] = useState("")
 
-  const filteredProjects = ALL_PROJECTS_DATABASE.filter(p => {
+  const filteredProjects = projectsList.filter((p: any) => {
     const matchNo = searchNo ? p.id.includes(searchNo) : true
     const matchName = searchName ? p.name.includes(searchName) : true
     return matchNo && matchName
   })
 
-  const handleSelectProject = (p: typeof ALL_PROJECTS_DATABASE[0]) => {
+  const handleSelectProject = (p: (typeof projectsList)[number]) => {
     setSelectedProject(p)
     setSearchNo(p.id)
     setSearchName(p.name)
