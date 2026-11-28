@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const email = String(body.email ?? "").trim().toLowerCase()
     const password = String(body.password ?? "")
     const branch = String(body.branch ?? "").trim()
-    const allowedBranches = ["الإدارة العامة", "فرع تعز", "فرع عدن", "فرع حضرموت", "فرع المكلا", "مكتب مأرب", "فرع صنعاء", "فرع عمران", "فرع حجة", "فرع الحديدة", "فرع إب"]
+    const allowedBranches = ["الإدارة العامة", "فرع تعز", "فرع عدن", "فرع حضرموت", "فرع المكلا", "مكتب مأرب", "فرع صنعاء", "فرع عمران", "فرع حجة", "فرع الحديدة", "فرع إب", "فرع ذمار"]
 
     if (!/^[A-Za-z0-9_.]{3,30}$/.test(username) || !name || !/^\S+@\S+\.\S+$/.test(email) || password.length < 12 || !allowedBranches.includes(branch)) {
       return NextResponse.json({ success: false, message: "تحقق من اسم المستخدم والاسم والبريد وكلمة المرور والفرع." }, { status: 400 })
