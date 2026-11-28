@@ -1,5 +1,5 @@
 "use client"
-import ComplaintBoxesPage from "../page"
+import ComplaintBoxesPage from "@/components/complaint-boxes-workspace"
 export default function OpeningMinutesRoute() {
   return <ComplaintBoxesPage initialTab="minutes" />
 }
