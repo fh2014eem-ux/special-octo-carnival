@@ -13,7 +13,7 @@ type Attachment = { id: string; fileName: string; mimeType: string; fileSize: nu
 type ComplaintBoxItem = {
   id: string; boxNumber: string; projectNumber: string; projectName: string
   installLocation: string; installDate: string; chosenBy: string; reasonForPlace: string
-  boxCount: number; status: string; attachments: Attachment[]
+  boxCount: number; status: string; notInstalledReason?: string | null; projectSector?: string | null; projectUnit?: string | null; funder?: string | null; openingResponsibleName?: string | null; deliveryResponsibleName?: string | null; attachments: Attachment[]
 }
 type OpeningMinutesItem = {
   id: string; minuteNumber: string; boxNumber: string; projectNumber: string; projectName: string
@@ -255,6 +255,29 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
     }
   }
 
+  const updateBoxStatus = async (box: ComplaintBoxItem, status: string) => {
+    const notInstalledReason = status === "لم يتم تركيب"
+      ? window.prompt("يرجى كتابة سبب عدم تركيب الصندوق:")?.trim() || ""
+      : ""
+    if (status === "لم يتم تركيب" && !notInstalledReason) {
+      toast.error("يجب إدخال سبب عدم التركيب.")
+      return
+    }
+    try {
+      const response = await fetch(`/api/complaint-boxes/${box.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, notInstalledReason }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || "تعذر تحديث حالة الصندوق.")
+      setRegisteredBoxes(current => current.map(item => item.id === box.id ? { ...item, status, notInstalledReason } : item))
+      toast.success("تم تحديث حالة الصندوق.")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر تحديث حالة الصندوق.")
+    }
+  }
+
   const getBoxAlerts = (box: ComplaintBoxItem) => {
     const latest = registeredMinutes.find(minute => minute.boxNumber === box.boxNumber)
     const openingDue = latest ? nextWeeklyDate(latest.openingDate.slice(0, 10)) : nextWednesday()
@@ -346,7 +369,7 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
               <table className="w-full text-right">
                 <thead className="bg-slate-100 border-b"><tr><th className="p-2 border-l">رقم الصندوق</th><th className="p-2 border-l">رقم المشروع</th><th className="p-2 border-l">اسم المشروع</th><th className="p-2 border-l">مكان التعليق</th><th className="p-2 border-l">تاريخ التركيب</th><th className="p-2 border-l">عدد الصناديق</th><th className="p-2">الحالة</th></tr></thead>
                 <tbody>
-                  {filteredBoxesList.map(box => <tr key={box.id} className="border-b hover:bg-slate-50"><td className="p-2 border-l font-bold font-mono text-blue-900">{box.boxNumber}</td><td className="p-2 border-l font-mono">{box.projectNumber}</td><td className="p-2 border-l">{box.projectName}</td><td className="p-2 border-l">{box.installLocation}</td><td className="p-2 border-l">{box.installDate.slice(0, 10)}</td><td className="p-2 border-l">{box.boxCount}</td><td className="p-2">{box.status}</td></tr>)}
+                  {filteredBoxesList.map(box => <tr key={box.id} className="border-b hover:bg-slate-50"><td className="p-2 border-l font-bold font-mono text-blue-900">{box.boxNumber}</td><td className="p-2 border-l font-mono">{box.projectNumber}</td><td className="p-2 border-l">{box.projectName}<div className="text-[10px] text-slate-500">{box.projectSector || "—"} / {box.projectUnit || "—"} / {box.funder || "—"}</div></td><td className="p-2 border-l">{box.installLocation}<div className="text-[10px] text-slate-500">مسؤول الفتح: {box.openingResponsibleName || box.chosenBy}</div></td><td className="p-2 border-l">{box.installDate.slice(0, 10)}</td><td className="p-2 border-l">{box.boxCount}</td><td className="p-2 min-w-40"><select value={box.status} onChange={e => void updateBoxStatus(box, e.target.value)} className="w-full rounded border bg-white p-1"><option>يعمل</option><option>متوقف مؤقتا</option><option>إعادة تفعيل</option><option>إزالة التركيب</option><option>لم يتم تركيب</option></select>{box.notInstalledReason && <p className="mt-1 text-rose-700">{box.notInstalledReason}</p>}</td></tr>)}
                   {!loading && filteredBoxesList.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-slate-500">لا توجد صناديق مسجلة مطابقة للبحث.</td></tr>}
                   {loading && <tr><td colSpan={7} className="p-6 text-center text-slate-500">جارٍ تحميل الصناديق...</td></tr>}
                 </tbody>
