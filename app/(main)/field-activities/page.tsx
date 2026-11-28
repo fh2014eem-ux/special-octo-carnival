@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ALL_PROJECTS_DATABASE } from "@/lib/appData"
 import FieldFormContent from "./components/FieldFormContent"
 
 interface CommitteeMember {
@@ -49,12 +48,33 @@ export default function FieldManagementPage() {
   const [selectedProject, setSelectedProject] = useState<any | null>(null)
   const [filterCardStatus, setFilterCardStatus] = useState<string | null>(null)
 
-  // القائمة التشغيلية مشتقة من سجل المشاريع المرجعي الموحد.
-  const projectsList = ALL_PROJECTS_DATABASE.map((project) => ({
-    ...project,
-    status: "غير محدد",
-    date: "-",
-  }))
+  // تحميل المشاريع من المرجع المركزي بدلاً من نسخة ثابتة داخل المتصفح.
+  const [projectsList, setProjectsList] = useState<any[]>([])
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/reference/projects", { cache: "no-store" })
+      .then(async response => {
+        const body = await response.json()
+        if (!response.ok) throw new Error(body.error || "تعذر تحميل مرجع المشاريع")
+        const mapped = (Array.isArray(body.projects) ? body.projects : []).map((project: any) => {
+          const data = project.data && typeof project.data === "object" ? project.data : {}
+          return {
+            id: project.projectNumber,
+            name: project.projectName,
+            branch: project.branch || "",
+            sector: data["القطاع الرئيسي"] || "",
+            funder: data["الممول"] || "",
+            officer: data["ضابط المشروع"] || "",
+            status: data["حالة المشروع"] || "غير محدد",
+            date: data["تاريخ البدء"] || "-",
+            data,
+          }
+        })
+        if (!cancelled) setProjectsList(mapped)
+      })
+      .catch(error => { if (!cancelled) toast.error(error instanceof Error ? error.message : "تعذر تحميل المشاريع المرجعية") })
+    return () => { cancelled = true }
+  }, [])
 
   const [awarenessExecuter, setAwarenessExecuter] = useState("فريق الشكاوى والامتثال")
   const [awarenessDate, setAwarenessDate] = useState("2026-10-30")
