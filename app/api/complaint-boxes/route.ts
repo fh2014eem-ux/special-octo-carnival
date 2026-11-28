@@ -47,10 +47,14 @@ export async function POST(request: Request) {
   const requestedBoxNumber = String(form.get("boxNumber") ?? "").trim()
   const projectNumber = String(form.get("projectNumber") ?? "").trim()
   const projectName = String(form.get("projectName") ?? "").trim()
-  const installLocation = String(form.get("installLocation") ?? "").trim()
-  const installDate = String(form.get("installDate") ?? "")
-  const reasonForPlace = String(form.get("reasonForPlace") ?? "").trim()
-  const chosenBy = String(form.get("chosenBy") ?? "").trim()
+  const rawBoxes = String(form.get("boxes") ?? "")
+  const parsedBoxes = rawBoxes ? JSON.parse(rawBoxes) as Array<{ installLocation?: string; installDate?: string; reasonForPlace?: string; chosenBy?: string }> : []
+  const boxEntries = parsedBoxes.length ? parsedBoxes : [{
+    installLocation: String(form.get("installLocation") ?? "").trim(),
+    installDate: String(form.get("installDate") ?? ""),
+    reasonForPlace: String(form.get("reasonForPlace") ?? "").trim(),
+    chosenBy: String(form.get("chosenBy") ?? "").trim(),
+  }]
   const openingResponsibleName = String(form.get("openingResponsibleName") ?? "").trim()
   const openingResponsibleRole = String(form.get("openingResponsibleRole") ?? "").trim()
   const openingResponsiblePhone = String(form.get("openingResponsiblePhone") ?? "").trim()
@@ -60,8 +64,8 @@ export async function POST(request: Request) {
   const deliveryResponsiblePhone = String(form.get("deliveryResponsiblePhone") ?? "").trim()
   const deliveryResponsibleNotes = String(form.get("deliveryResponsibleNotes") ?? "").trim()
   const boxCount = Number(form.get("boxCount") ?? 1)
-  if (!projectNumber || !projectName || !installLocation || !installDate || !reasonForPlace || !chosenBy || !openingResponsibleName || !deliveryResponsibleName || !Number.isInteger(boxCount) || boxCount < 1) {
-    return NextResponse.json({ error: "يرجى استكمال جميع بيانات الصندوق والتأكد من عدد الصناديق." }, { status: 422 })
+  if (!projectNumber || !projectName || !openingResponsibleName || !deliveryResponsibleName || !Number.isInteger(boxCount) || boxCount < 1 || boxEntries.length !== boxCount || boxEntries.some(item => !String(item.installLocation ?? "").trim() || !String(item.installDate ?? "").trim() || !String(item.reasonForPlace ?? "").trim() || !String(item.chosenBy ?? "").trim())) {
+    return NextResponse.json({ error: "يرجى استكمال بيانات كل صندوق على حدة والتأكد من تطابق عدد الصناديق." }, { status: 422 })
   }
   const project = await prisma.$queryRaw<Array<{ projectName: string; branch: string | null; data: unknown }>>`
     SELECT project_name AS "projectName", branch, data FROM public.chm_reference_projects
@@ -76,29 +80,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "يسمح بإرفاق 10 صور كحد أقصى، بحد إجمالي 4 ميجابايت للطلب." }, { status: 422 })
   }
   try {
-    const boxNumber = requestedBoxNumber || `BOX-${new Date().getFullYear()}-${Date.now()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`
     const projectData = project[0].data && typeof project[0].data === "object" ? project[0].data as Record<string, unknown> : {}
-    const box = await prisma.fieldBox.create({
-      data: {
-        boxNumber, projectNumber, projectName, installLocation, installDate,
-        reasonForPlace, chosenBy, openingResponsibleName, openingResponsibleRole: openingResponsibleRole || null,
-        openingResponsiblePhone: openingResponsiblePhone || null, openingResponsibleNotes: openingResponsibleNotes || null,
-        deliveryResponsibleName, deliveryResponsibleRole: deliveryResponsibleRole || null,
-        deliveryResponsiblePhone: deliveryResponsiblePhone || null, deliveryResponsibleNotes: deliveryResponsibleNotes || null,
-        projectSector: String(projectData["القطاع الرئيسي"] ?? "") || null,
-        projectUnit: String(projectData["الوحدة"] ?? "") || null,
-        funder: String(projectData["الممول"] ?? "") || null,
-        branch: scope.branch, boxCount, status: "يعمل",
-        attachments: files.length ? { create: await Promise.all(files.map(async file => ({
-          fileName: file.name.replace(/[\\/\\0]/g, "_").slice(0, 240),
-          mimeType: file.type,
-          fileSize: file.size,
-          fileContent: Buffer.from(await file.arrayBuffer()),
-        }))) } : undefined,
-      },
-      include: { attachments: { select: { id: true, fileName: true, mimeType: true, fileSize: true } } },
-    })
-    return NextResponse.json({ box }, { status: 201 })
+    const createdBoxes = await prisma.$transaction(async (tx) => Promise.all(boxEntries.map(async (entry) => {
+      const boxNumber = `BOX-${new Date().getFullYear()}-${crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`
+      const entryFiles = await Promise.all(files.map(async file => ({
+        fileName: file.name.replace(/[\\/\\0]/g, "_").slice(0, 240),
+        mimeType: file.type,
+        fileSize: file.size,
+        fileContent: Buffer.from(await file.arrayBuffer()),
+      })))
+      return tx.fieldBox.create({
+        data: {
+          boxNumber, projectNumber, projectName,
+          installLocation: String(entry.installLocation).trim(),
+          installDate: String(entry.installDate),
+          reasonForPlace: String(entry.reasonForPlace).trim(),
+          chosenBy: String(entry.chosenBy).trim(),
+          openingResponsibleName, openingResponsibleRole: openingResponsibleRole || null,
+          openingResponsiblePhone: openingResponsiblePhone || null, openingResponsibleNotes: openingResponsibleNotes || null,
+          deliveryResponsibleName, deliveryResponsibleRole: deliveryResponsibleRole || null,
+          deliveryResponsiblePhone: deliveryResponsiblePhone || null, deliveryResponsibleNotes: deliveryResponsibleNotes || null,
+          projectSector: String(projectData["القطاع الرئيسي"] ?? "") || null,
+          projectUnit: String(projectData["الوحدة"] ?? "") || null,
+          funder: String(projectData["الممول"] ?? "") || null,
+          branch: scope.branch, boxCount: 1, status: "يعمل",
+          attachments: entryFiles.length ? { create: entryFiles } : undefined,
+        },
+        include: { attachments: { select: { id: true, fileName: true, mimeType: true, fileSize: true } } },
+      })
+    })))
+    return NextResponse.json({ boxes: createdBoxes, box: createdBoxes[0] }, { status: 201 })
   } catch (error) {
     console.error("CHM_BOX_CREATE_FAILED", error)
     return NextResponse.json({ error: "تعذر حفظ الصندوق. تحقق من عدم تكرار رقم الصندوق." }, { status: 503 })
