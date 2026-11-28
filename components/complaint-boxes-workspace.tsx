@@ -396,7 +396,12 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
                   <option value="">-- اختر رقم الصندوق --</option>
                   {filteredBoxesForMinutes.map(box => <option key={box.id} value={box.boxNumber}>{box.boxNumber} | {box.projectNumber} — {box.projectName}</option>)}
                 </select>
-                {selectedBoxObj && <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl grid grid-cols-2 md:grid-cols-4 gap-3 text-emerald-900 font-semibold"><div>رقم الصندوق: <b>{selectedBoxObj.boxNumber}</b></div><div>رقم المشروع: <b>{selectedBoxObj.projectNumber}</b></div><div>اسم المشروع: <b>{selectedBoxObj.projectName}</b></div><div>موقع التثبيت: <b>{selectedBoxObj.installLocation}</b></div></div>}
+                {selectedBoxObj && <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-3 text-emerald-900 font-semibold">
+                  <div>رقم الصندوق: <b>{selectedBoxObj.boxNumber}</b></div><div>رقم المشروع: <b>{selectedBoxObj.projectNumber}</b></div><div>اسم المشروع: <b>{selectedBoxObj.projectName}</b></div>
+                  <div>القطاع الرئيسي: <b>{selectedBoxObj.projectSector || "—"}</b></div><div>الوحدة: <b>{selectedBoxObj.projectUnit || "—"}</b></div><div>الممول: <b>{selectedBoxObj.funder || "—"}</b></div>
+                  <div>مكان التعليق: <b>{selectedBoxObj.installLocation}</b></div><div>تاريخ التعليق: <b>{selectedBoxObj.installDate.slice(0, 10)}</b></div><div>سبب اختيار المكان: <b>{selectedBoxObj.reasonForPlace}</b></div>
+                  <div>المسؤول عن فتح الصندوق: <b>{selectedBoxObj.openingResponsibleName || selectedBoxObj.chosenBy}</b></div><div>المسؤول عن إيصال المحضر: <b>{selectedBoxObj.deliveryResponsibleName || "—"}</b></div><div>حالة الصندوق: <b>{selectedBoxObj.status}</b></div>
+                </div>}
               </div>
 
               {selectedBoxObj && <>
