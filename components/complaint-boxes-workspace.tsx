@@ -20,7 +20,7 @@ type OpeningMinutesItem = {
   openingDate: string; minutesDate: string; deliveryDate: string; entryDate: string; expectedDate: string
   totalDocuments: number; totalOperations: number; acceptedAttachments: number; rejectedAttachments: number; rejectionReasons?: string | null
   complaintsCount: number; reportsCount: number; requestsCount: number; proposalsCount: number
-  inquiriesCount: number; praisesCount: number; delayStatus: string; attachments: Attachment[]
+  inquiriesCount: number; praisesCount: number; delayStatus: string; deliveredBy?: string | null; deliveryMethod?: string; deliveryDelayReason?: string | null; openingDelayReason?: string | null; submittedVia?: string; attachments: Attachment[]
 }
 
 function yemenToday() {
@@ -464,6 +464,9 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
                 <div className="flex items-center justify-between gap-2"><strong className="text-blue-950">تفاصيل المحضر {selectedMinute.minuteNumber}</strong><Button size="sm" variant="outline" onClick={() => setSelectedMinute(null)}>إغلاق التفاصيل</Button></div>
                 <p>رقم الصندوق: {selectedMinute.boxNumber} — المشروع: {selectedMinute.projectNumber} / {selectedMinute.projectName}</p>
                 <p>تاريخ الفتح: {selectedMinute.openingDate.slice(0, 10)} — تاريخ استلام المحضر: {selectedMinute.minutesDate} — تاريخ التسليم المتوقع: {selectedMinute.deliveryDate}</p>
+                <p>من قام بالتسليم: {selectedMinute.deliveredBy || "—"} — طريقة التسليم: {selectedMinute.deliveryMethod || "يدوياً"} — مصدر الإدخال: {selectedMinute.submittedVia || "يدوياً"}</p>
+                {selectedMinute.openingDelayReason && <p className="text-rose-700">سبب تأخر الفتح: {selectedMinute.openingDelayReason}</p>}
+                {selectedMinute.deliveryDelayReason && <p className="text-rose-700">سبب تأخر تسليم المحضر: {selectedMinute.deliveryDelayReason}</p>}
                 <p>إجمالي الوثائق: {selectedMinute.totalDocuments} — المقبولة: {selectedMinute.acceptedAttachments} — المرفوضة: {selectedMinute.rejectedAttachments}</p>
                 <p>توزيع المقبولة: شكاوى {selectedMinute.complaintsCount} — بلاغات {selectedMinute.reportsCount} — طلبات {selectedMinute.requestsCount} — مقترحات {selectedMinute.proposalsCount} — استعلامات {selectedMinute.inquiriesCount} — إطراءات {selectedMinute.praisesCount}</p>
                 <div className="pt-2 border-t">{selectedMinute.attachments.map(file => <a key={file.id} className="block text-blue-700 underline" href={`/api/complaint-boxes/attachments/${file.id}`} target="_blank" rel="noreferrer">{file.fileName}</a>)}</div>
