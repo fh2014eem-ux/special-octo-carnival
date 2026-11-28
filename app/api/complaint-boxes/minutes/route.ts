@@ -89,13 +89,18 @@ export async function POST(request: Request) {
     const deliveryDate = latest ? nextWeeklyDate(latest.deliveryDate) : addDays(expectedDate, 1)
     const delayDays = dayDifference(today, expectedDate)
     const delayStatus = delayDays <= 0 ? "🟢 ضمن المدة" : delayDays <= 3 ? "🟡 تأخير بسيط" : "🔴 متأخر"
-    const minuteNumber = `MIN-${today.slice(0, 4)}-${Date.now()}`
+    const minuteNumber = `MIN-${today.slice(0, 4)}-${crypto.randomUUID().replace(/-/g, "").toUpperCase()}`
 
     const minute = await prisma.boxOpeningMinute.create({
       data: {
         minuteNumber, boxNumber, projectNumber, projectName,
         openingDate: today, expectedDate, deliveryDate, entryDate: today, minutesDate,
         openingCommittee: session.user.name || "لجنة فتح الصندوق",
+        deliveredBy: deliveredBy || null,
+        deliveryMethod: effectiveDeliveryMethod,
+        deliveryDelayReason: deliveryDelayReason || null,
+        openingDelayReason: openingDelayReason || null,
+        submittedVia,
         branch: box.branch,
         totalDocuments,
         delayStatus,
