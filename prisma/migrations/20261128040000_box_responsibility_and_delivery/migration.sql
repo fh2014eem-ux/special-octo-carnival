@@ -15,6 +15,7 @@ ALTER TABLE "FieldBox"
   ADD COLUMN "statusUpdatedBy" TEXT;
 
 ALTER TABLE "FieldBox" ALTER COLUMN "status" SET DEFAULT 'يعمل';
+UPDATE "FieldBox" SET "status" = 'يعمل' WHERE "status" IN ('نشط', 'فعال', 'Active');
 
 ALTER TABLE "BoxOpeningMinute"
   ADD COLUMN "deliveredBy" TEXT,
