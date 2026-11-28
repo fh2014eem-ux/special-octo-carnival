@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 
-type ProjectOption = { projectNumber: string; projectName: string; branch?: string | null }
+type ProjectOption = { projectNumber: string; projectName: string; branch?: string | null; data?: Record<string, unknown> | null }
 type Attachment = { id: string; fileName: string; mimeType: string; fileSize: number }
 type ComplaintBoxItem = {
   id: string; boxNumber: string; projectNumber: string; projectName: string
@@ -61,6 +61,14 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
   const [boxLocation, setBoxLocation] = useState("")
   const [boxReason, setBoxReason] = useState("")
   const [boxChosenBy, setBoxChosenBy] = useState("")
+  const [openingResponsibleName, setOpeningResponsibleName] = useState("")
+  const [openingResponsibleRole, setOpeningResponsibleRole] = useState("")
+  const [openingResponsiblePhone, setOpeningResponsiblePhone] = useState("")
+  const [openingResponsibleNotes, setOpeningResponsibleNotes] = useState("")
+  const [deliveryResponsibleName, setDeliveryResponsibleName] = useState("")
+  const [deliveryResponsibleRole, setDeliveryResponsibleRole] = useState("")
+  const [deliveryResponsiblePhone, setDeliveryResponsiblePhone] = useState("")
+  const [deliveryResponsibleNotes, setDeliveryResponsibleNotes] = useState("")
   const [boxFiles, setBoxFiles] = useState<File[]>([])
 
   const [minutesProjectNo, setMinutesProjectNo] = useState("")
@@ -158,18 +166,25 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
   }
 
   const handleSaveBox = async () => {
-    if (!selectedProject || !boxNumber.trim() || !boxLocation.trim() || !installDate || !boxReason.trim() || !boxChosenBy.trim() || boxesCount < 1) {
+    if (!selectedProject || !boxLocation.trim() || !installDate || !boxReason.trim() || !boxChosenBy.trim() || !openingResponsibleName.trim() || !deliveryResponsibleName.trim() || boxesCount < 1) {
       toast.error("يرجى اختيار المشروع واستكمال جميع بيانات الصندوق.")
       return
     }
     const form = new FormData()
-    form.set("boxNumber", boxNumber.trim())
     form.set("projectNumber", selectedProject.projectNumber)
     form.set("projectName", selectedProject.projectName)
     form.set("installLocation", boxLocation)
     form.set("installDate", installDate)
     form.set("reasonForPlace", boxReason)
     form.set("chosenBy", boxChosenBy)
+    form.set("openingResponsibleName", openingResponsibleName)
+    form.set("openingResponsibleRole", openingResponsibleRole)
+    form.set("openingResponsiblePhone", openingResponsiblePhone)
+    form.set("openingResponsibleNotes", openingResponsibleNotes)
+    form.set("deliveryResponsibleName", deliveryResponsibleName)
+    form.set("deliveryResponsibleRole", deliveryResponsibleRole)
+    form.set("deliveryResponsiblePhone", deliveryResponsiblePhone)
+    form.set("deliveryResponsibleNotes", deliveryResponsibleNotes)
     form.set("boxCount", String(boxesCount))
     boxFiles.forEach(file => form.append("images", file))
     setSavingBox(true)
@@ -178,7 +193,7 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
       const body = await response.json()
       if (!response.ok) throw new Error(body.error || "تعذر حفظ الصندوق")
       setRegisteredBoxes(current => [body.box as ComplaintBoxItem, ...current])
-      setBoxNumber(""); setBoxLocation(""); setBoxReason(""); setBoxChosenBy(""); setBoxFiles([]); setSelectedProject(null)
+      setBoxNumber(""); setBoxLocation(""); setBoxReason(""); setBoxChosenBy(""); setOpeningResponsibleName(""); setOpeningResponsibleRole(""); setOpeningResponsiblePhone(""); setOpeningResponsibleNotes(""); setDeliveryResponsibleName(""); setDeliveryResponsibleRole(""); setDeliveryResponsiblePhone(""); setDeliveryResponsibleNotes(""); setBoxFiles([]); setSelectedProject(null)
       toast.success("تم حفظ الصندوق ومرفقاته في قاعدة البيانات.")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذر حفظ الصندوق")
@@ -276,9 +291,9 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
                   </div>
                 )}
               </div>
-              {selectedProject && <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-lg text-xs text-blue-900">المشروع المحدد: <b>{selectedProject.projectNumber}</b> — <b>{selectedProject.projectName}</b></div>}
+              {selectedProject && <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-lg text-xs text-blue-900 space-y-2"><div>المشروع المحدد: <b>{selectedProject.projectNumber}</b> — <b>{selectedProject.projectName}</b></div><div className="grid grid-cols-1 md:grid-cols-3 gap-2"><span>القطاع الرئيسي: <b>{String(selectedProject.data?.["القطاع الرئيسي"] ?? "—")}</b></span><span>الوحدة: <b>{String(selectedProject.data?.["الوحدة"] ?? "—")}</b></span><span>الممول: <b>{String(selectedProject.data?.["الممول"] ?? "—")}</b></span></div></div>}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div><label className="block font-semibold mb-1">رقم الصندوق *</label><Input value={boxNumber} onChange={e => setBoxNumber(e.target.value)} placeholder="مثال: BOX-800-01" className="font-mono font-bold" /></div>
+                <div className="rounded-lg border bg-blue-50 p-3 text-blue-900"><label className="block font-semibold mb-1">رقم الصندوق</label><p className="font-bold">يُنشأ آلياً عند الحفظ</p></div>
                 <div><label className="block font-semibold mb-1">عدد الصناديق *</label><Input type="number" min={1} value={boxesCount} onChange={e => setBoxesCount(Number(e.target.value))} /></div>
                 <div><label className="block font-semibold mb-1">تاريخ التعليق *</label><Input type="date" value={installDate} onChange={e => setInstallDate(e.target.value)} /></div>
               </div>
@@ -286,6 +301,24 @@ export default function ComplaintBoxesPage({ initialTab = "boxes" }: { initialTa
                 <div><label className="block font-semibold mb-1">مكان التعليق *</label><Input value={boxLocation} onChange={e => setBoxLocation(e.target.value)} /></div>
                 <div><label className="block font-semibold mb-1">سبب اختيار المكان *</label><Input value={boxReason} onChange={e => setBoxReason(e.target.value)} /></div>
                 <div><label className="block font-semibold mb-1">من اختار المكان *</label><Input value={boxChosenBy} onChange={e => setBoxChosenBy(e.target.value)} /></div>
+              </div>
+              <div className="rounded-xl border p-4 space-y-3">
+                <h3 className="font-bold text-blue-900">بيانات المعني بفتح الصندوق</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div><label className="block mb-1 font-semibold">الاسم *</label><Input value={openingResponsibleName} onChange={e => setOpeningResponsibleName(e.target.value)} /></div>
+                  <div><label className="block mb-1 font-semibold">الصفة</label><Input value={openingResponsibleRole} onChange={e => setOpeningResponsibleRole(e.target.value)} /></div>
+                  <div><label className="block mb-1 font-semibold">التلفون</label><Input value={openingResponsiblePhone} onChange={e => setOpeningResponsiblePhone(e.target.value)} /></div>
+                </div>
+                <div><label className="block mb-1 font-semibold">ملاحظات / تفاصيل إضافية</label><Textarea value={openingResponsibleNotes} onChange={e => setOpeningResponsibleNotes(e.target.value)} rows={2} /></div>
+              </div>
+              <div className="rounded-xl border p-4 space-y-3">
+                <h3 className="font-bold text-blue-900">بيانات المسؤول عن إيصال المحضر</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div><label className="block mb-1 font-semibold">الاسم *</label><Input value={deliveryResponsibleName} onChange={e => setDeliveryResponsibleName(e.target.value)} /></div>
+                  <div><label className="block mb-1 font-semibold">الصفة</label><Input value={deliveryResponsibleRole} onChange={e => setDeliveryResponsibleRole(e.target.value)} /></div>
+                  <div><label className="block mb-1 font-semibold">التلفون</label><Input value={deliveryResponsiblePhone} onChange={e => setDeliveryResponsiblePhone(e.target.value)} /></div>
+                </div>
+                <div><label className="block mb-1 font-semibold">ملاحظات</label><Textarea value={deliveryResponsibleNotes} onChange={e => setDeliveryResponsibleNotes(e.target.value)} rows={2} /></div>
               </div>
               <div className="border p-3 rounded-lg bg-slate-50 space-y-2">
                 <label className="block font-semibold mb-1">📷 صور تعليق الصندوق واللوحة الإرشادية (اختياري)</label>
