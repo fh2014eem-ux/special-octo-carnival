@@ -16,6 +16,9 @@ on:
       - "tsconfig.json"
       - "next.config.mjs"
       - "scripts/**"
+      - "INSTALL-FIRST.txt"
+      - "RUN_ON_WINDOWS.md"
+      - ".env.example"
       - ".github/workflows/chm-validation.yml"
 
 permissions:
