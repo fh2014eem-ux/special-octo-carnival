@@ -6,13 +6,16 @@ import { prisma } from "@/lib/prisma"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const ALLOWED_STATUSES = new Set(["يعمل", "متوقف مؤقتا", "إعادة تفعيل", "إزالة التركيب", "لم يتم تركيب"])
+const ALLOWED_STATUSES = new Set(["يعمل", "متوقف مؤقتاً", "إعادة تفعيل", "إزالة التركيب", "لم يتم تركيب"])
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user || session.user.active === false) {
     return NextResponse.json({ error: "يرجى تسجيل الدخول أولاً." }, { status: 401 })
   }
+
+  const canManageBoxStatus = session.user.role === "مدخل بيانات" || session.user.role === "مدير النظام" || session.user.role === "إدارة عامة" || session.user.branch === "الإدارة العامة"
+  if (!canManageBoxStatus) return NextResponse.json({ error: "لا تملك صلاحية تحديث حالة صندوق الشكاوى." }, { status: 403 })
 
   const { id } = await params
   const body = await request.json().catch(() => null) as { status?: string; notInstalledReason?: string } | null
