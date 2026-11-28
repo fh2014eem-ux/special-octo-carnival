@@ -179,22 +179,42 @@ export default function FieldManagementPage() {
 
   const handleQuickSave = () => saveDraftToBrowser()
 
-  const handleFinalSave = () => {
+  const handleFinalSave = async () => {
+    if (!searchNo.trim() || !searchName.trim()) {
+      toast.error("يرجى اختيار المشروع من المرجع قبل حفظ التقرير.")
+      return
+    }
     try {
-      const key = "field-management-reports-v1"
-      const current = JSON.parse(localStorage.getItem(key) || "[]")
-      const report = {
-        ...buildFieldPayload(),
-        id: `FIELD-${Date.now()}`,
-        submittedAt: new Date().toISOString(),
-        status: "محفوظ محلياً - غير معتمد",
-      }
-      localStorage.setItem(key, JSON.stringify([report, ...current]))
+      const details = buildFieldPayload()
+      const response = await fetch("/api/field-awareness", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectNumber: searchNo.trim(),
+          projectName: searchName.trim(),
+          awarenessType: awarenessMode === "تكرار" ? "تكرار التوعية" : "توعية أساسية",
+          projectCategory: projectType === "تدريبي" ? "مشاريع تدريبية" : projectType === "أخرى" ? "أخرى" : "مشاريع ميدانية",
+          activityDate: awarenessDate,
+          location: awarenessPlace,
+          targetAudience: brochuresTarget,
+          activityGoal: activityObjective,
+          topic: activitySubject,
+          duration: activityDuration,
+          directBeneficiaries,
+          indirectBeneficiaries,
+          description: awarenessDescription,
+          hasBox: hasBox === "نعم",
+          boxCount: hasBox === "نعم" ? boxCount : 0,
+          details,
+        }),
+      })
+      const body = await response.json()
+      if (!response.ok) throw new Error(body.error || "تعذر حفظ تقرير التوعية مركزياً.")
       localStorage.removeItem("field-management-current-draft-v1")
-      toast.success("تم حفظ التقرير محلياً على هذا المتصفح، ولم يتم اعتماده مركزياً.")
+      toast.success("تم حفظ تقرير التوعية في قاعدة البيانات المركزية بنجاح.")
       setCurrentView("dashboard")
-    } catch {
-      toast.error("تعذر حفظ التقرير محلياً. لم يتم تأكيد الحفظ.")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر حفظ التقرير مركزياً.")
     }
   }
 
