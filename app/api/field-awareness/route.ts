@@ -45,8 +45,8 @@ export async function POST(request: Request) {
   }
 
   const referenceBranch = branch === "فرع المكلا" ? "فرع حضرموت" : branch
-  const projects = await prisma.$queryRaw<Array<{ projectName: string; branch: string | null; sector: string | null; data: unknown }>>`
-    SELECT project_name AS "projectName", branch, sector, data
+  const projects = await prisma.$queryRaw<Array<{ projectName: string; branch: string | null; data: unknown }>>`
+    SELECT project_name AS "projectName", branch, data
     FROM public.chm_reference_projects
     WHERE active = true AND project_number = ${projectNumber}
     LIMIT 1
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       data: {
         projectNumber,
         projectName,
-        sector: project.sector || textValue(body.sector) || "",
+        sector: textValue(body.sector) || (project.data && typeof project.data === "object" ? textValue((project.data as Record<string, unknown>)["القطاع الرئيسي"]) : ""),
         governorate: textValue(body.governorate),
         directorate: textValue(body.directorate),
         awarenessType: textValue(body.awarenessType) || "توعية أساسية",
