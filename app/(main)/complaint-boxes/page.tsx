@@ -239,7 +239,7 @@ export default function ComplaintBoxesPage() {
     <div className="max-w-7xl mx-auto p-6 space-y-6 dir-rtl text-right font-sans">
       <div className="bg-white p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 border-l-blue-900">
         <div>
-          <h1 className="text-xl font-black text-slate-900">المحور الثالث — صناديق الشكاوى ومحاضر الفتح 📦</h1>
+          <h1 className="text-xl font-black text-slate-900">صناديق الشكاوى ومحاضر الفتح 📦</h1>
           <p className="text-xs text-slate-500 mt-1">تثبيت الصناديق الميدانية، تحرير محاضر الفتح، والتحقق الآلي والحفظ المركزي</p>
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-bold">
