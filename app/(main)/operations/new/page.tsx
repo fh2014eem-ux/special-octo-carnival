@@ -657,6 +657,14 @@ export default function NewOperationPage() {
                   <option value="كيدية">كيدية</option>
                 </select>
               </div>
+              <div>
+                <label className="block font-semibold mb-1">هل العملية تتطلب التحليل؟ *</label>
+                <select value={requiresAnalysis} onChange={(e) => setRequiresAnalysis(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+                  <option value="نعم">نعم</option>
+                  <option value="لا">لا</option>
+                </select>
+                <p className="mt-1 text-[10px] text-slate-500">يتم حفظ الاختيار ضمن بيانات العملية.</p>
+              </div>
             </div>
 
             <div className="flex justify-between pt-4">
