@@ -1,10 +1,22 @@
-هذه نسخة المصدر النهائية بعد الإصلاحات.
+نسخة مصدر CHM-SFD للاختبار المحلي — وليست اعتماداً نهائياً للتشغيل الإنتاجي.
 
 على Windows داخل Visual Studio Code:
-1) npm install
-2) npm run db:generate
-3) انسخ .env.example إلى .env.local وأدخل بيانات قاعدة البيانات وBETTER_AUTH_SECRET
-4) npm run typecheck
-5) npm run dev
+1) ثبّت Node.js 24 LTS وفعّل Corepack.
+2) افتح Terminal داخل مجلد المشروع ونفّذ: corepack enable
+3) ثبّت مدير الحزم المحدد في package.json: corepack prepare pnpm@12.3.4 --activate
+4) ثبّت الحزم: pnpm install --frozen-lockfile
+5) انسخ .env.example إلى .env.local، ثم أدخل بيانات قاعدة اختبار منفصلة وقيمة BETTER_AUTH_SECRET عشوائية قوية.
+6) أنشئ Prisma Client: pnpm run db:generate
+7) افحص TypeScript: pnpm run typecheck
+8) شغّل محلياً: pnpm run dev
+9) افتح http://localhost:3000
 
-لا تقم بنسخ ملفات .env من جهاز آخر إلى هذه النسخة قبل مراجعة القيم.
+تنبيه قاعدة البيانات:
+- لا توصل هذه النسخة بقاعدة الإنتاج.
+- لا تنفّذ pnpm run db:deploy أو db:push أو db:migrate على قاعدة حقيقية حالياً؛ حالة سجل Prisma migrations تحتاج إلى تسوية والتحقق أولاً.
+- استخدم قاعدة محلية أو فرع Neon مخصصاً للاختبار فقط.
+- قد تظهر واجهة النظام، لكن بعض مسارات البيانات والمصادقة لم تجتز بعد الاختبار التشغيلي الكامل.
+
+الأمان:
+- لا تضع كلمات المرور أو مفاتيح Google أو روابط قواعد البيانات الحقيقية في ملفات تُرفع إلى GitHub.
+- لا تشارك ملف .env.local.
