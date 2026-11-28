@@ -184,9 +184,23 @@ model FieldBox {
   installDate     String
   reasonForPlace  String
   chosenBy        String
+  openingResponsibleName  String?
+  openingResponsibleRole  String?
+  openingResponsiblePhone String?
+  openingResponsibleNotes String?
+  deliveryResponsibleName  String?
+  deliveryResponsibleRole  String?
+  deliveryResponsiblePhone String?
+  deliveryResponsibleNotes String?
+  projectSector   String?
+  projectUnit     String?
+  funder          String?
+  notInstalledReason String?
+  statusUpdatedAt DateTime?
+  statusUpdatedBy String?
   branch          String
   boxCount        Int      @default(1)
-  status          String   @default("نشط")
+  status          String   @default("يعمل")
   createdAt       DateTime @default(now())
   attachments     FieldBoxAttachment[]
   minutes         BoxOpeningMinute[]
@@ -219,6 +233,11 @@ model BoxOpeningMinute {
   entryDate           String
   minutesDate         String
   openingCommittee    String
+  deliveredBy         String?
+  deliveryMethod      String   @default("يدوياً")
+  deliveryDelayReason String?
+  openingDelayReason  String?
+  submittedVia        String   @default("يدوياً")
   branch              String
   totalDocuments      Int
   delayStatus         String   @default("ضمن المدة")
