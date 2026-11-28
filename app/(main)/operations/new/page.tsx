@@ -215,7 +215,7 @@ export default function NewOperationPage() {
       return
     }
 
-    const found = REGISTERED_MINUTES_DATABASE.find(m => m.minutesId === minutesId)
+    const found = registeredMinutesDatabase.find(m => m.minutesId === minutesId)
     if (found) {
       setAutoFetchedMinutesData(found)
       setSearchNo(found.projectId)
